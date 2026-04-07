@@ -1,0 +1,32 @@
+@tailwind base;
+@tailwind components;
+@tailwind utilities;
+
+:root {
+  color-scheme: light;
+  font-family: "Inter", "Noto Sans TC", system-ui, -apple-system, sans-serif;
+  background: radial-gradient(circle at 20% 20%, #ecf4ff 0, transparent 25%),
+    radial-gradient(circle at 80% 0%, #fff2fb 0, transparent 30%),
+    #f7f9fc;
+}
+
+body {
+  margin: 0;
+  min-height: 100vh;
+  color: #0f172a;
+}
+
+* {
+  scrollbar-width: thin;
+  scrollbar-color: #94a3b8 transparent;
+}
+
+@layer base {
+  h1,
+  h2,
+  h3 {
+    font-weight: 700;
+    letter-spacing: -0.02em;
+    color: #0f172a;
+  }
+}
