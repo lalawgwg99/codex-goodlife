@@ -7,6 +7,7 @@
 - 即時生成：前端純函式生成指數、運勢摘要、幸運信號、雷達與行動路徑。
 - 分享與保存：一鍵生成圖卡、保存運勢紀錄（localStorage）。
 - Cloudflare Ready：Vite + React + Tailwind；預設 build 指令 `npm run build`，發布目錄 `dist`。
+ - AI 解讀：透過 Cloudflare Pages Functions 呼叫 OpenRouter（OpenAI SDK）。
 
 ## 快速開始
 ```bash
@@ -24,7 +25,17 @@ npm run build
 1) 新建站點，選擇「框架預設：Vite」。  
 2) Build command：`npm run build`  
 3) Build output directory：`dist`  
-4) 保存並部署；如需 Workers 邏輯，可在 `src/` 增加 API fetch 並以 Pages Functions/Workers Proxy 包裝。
+4) 保存並部署；本專案已內建 Pages Functions。  
+
+### OpenRouter 環境變數
+在 Cloudflare Pages 的環境變數設定：
+- `OPENROUTER_API_KEY`（必填）
+- `OPENROUTER_MODEL`（可選，預設 `qwen/qwen3.6-plus:free`）
+- `OPENROUTER_BASE_URL`（可選，預設 `https://openrouter.ai/api/v1`）
+- `OPENROUTER_REFERER`（可選，若 OpenRouter 需要）
+- `OPENROUTER_TITLE`（可選，若 OpenRouter 需要）
+
+前端會呼叫 `POST /api/fortune` 取得 AI 解讀內容。
 
 ## 自訂
 - 調整流派來源：修改 `src/App.tsx` 的 `flows` 陣列。

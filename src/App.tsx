@@ -1,25 +1,26 @@
 import { useEffect, useMemo, useRef, useState } from "react";
 import { toPng } from "html-to-image";
 
+type Lang = "zh-TW" | "zh-CN";
+
 type Flow = {
-  name: string;
-  repo: string;
-  desc: string;
-  vibe: string;
+  id: string;
+  name: Record<Lang, string>;
+  desc: Record<Lang, string>;
 };
 
-type Highlight = { title: string; body: string };
+type Focus = {
+  id: string;
+  label: Record<Lang, string>;
+};
 
-type Reading = {
+type AIResult = {
   headline: string;
-  score: number;
-  vibe: string;
-  focus: string;
-  path: string;
-  highlights: Highlight[];
-  lucky: { color: string; number: number; mantra: string; day: string };
-  roadmap: { now: string; week: string; month: string; season: string };
-  radar: { label: string; value: number }[];
+  summary: string;
+  highlights: string[];
+  lucky: { color: string; number: number; day: string; mantra: string };
+  roadmap: { today: string; week: string; month: string; season: string };
+  raw?: string;
 };
 
 type SavedReading = {
@@ -28,124 +29,176 @@ type SavedReading = {
   focus: string;
   path: string;
   headline: string;
-  score: number;
-  vibe: string;
   date: string;
 };
 
+const i18n = {
+  "zh-TW": {
+    title: "GoodLife 命理工作室",
+    subtitle: "簡單大方的命盤輸入與 AI 解讀，一鍵生成可分享的運勢筆記。",
+    ritual: "今天的儀式",
+    input: "命盤輸入",
+    name: "你的稱呼",
+    birth: "出生日期與時間",
+    wish: "目前的心願 / 煩惱",
+    focus: "想聚焦的主題",
+    flow: "流派選擇",
+    generate: "生成 AI 解讀",
+    generating: "生成中...",
+    share: "生成分享卡",
+    saving: "已保存",
+    save: "保存本次運勢",
+    result: "AI 解讀",
+    summary: "摘要",
+    highlights: "重點",
+    lucky: "幸運信號",
+    roadmap: "行動路徑",
+    today: "今天",
+    week: "本週",
+    month: "本月",
+    season: "本季",
+    saved: "保存紀錄",
+    emptySaved: "尚未保存任何紀錄。",
+    disclaimer: "本站內容僅供娛樂用途，不構成專業建議。",
+    langLabel: "語言",
+    compareTitle: "流派對比",
+    compareDesc: "同一主題，不同流派語氣差異。",
+  },
+  "zh-CN": {
+    title: "GoodLife 命理工作室",
+    subtitle: "简洁清爽的命盘输入与 AI 解读，一键生成可分享的运势笔记。",
+    ritual: "今天的仪式",
+    input: "命盘输入",
+    name: "你的称呼",
+    birth: "出生日期与时间",
+    wish: "目前的心愿 / 烦恼",
+    focus: "想聚焦的主题",
+    flow: "流派选择",
+    generate: "生成 AI 解读",
+    generating: "生成中...",
+    share: "生成分享卡",
+    saving: "已保存",
+    save: "保存本次运势",
+    result: "AI 解读",
+    summary: "摘要",
+    highlights: "重点",
+    lucky: "幸运信号",
+    roadmap: "行动路径",
+    today: "今天",
+    week: "本周",
+    month: "本月",
+    season: "本季",
+    saved: "保存记录",
+    emptySaved: "尚未保存任何记录。",
+    disclaimer: "本站内容仅供娱乐用途，不构成专业建议。",
+    langLabel: "语言",
+    compareTitle: "流派对比",
+    compareDesc: "同一主题，不同流派语气差异。",
+  },
+} as const;
+
 const flows: Flow[] = [
   {
-    name: "赛博算命",
-    repo: "https://github.com/jinchenma94/bazi-skill",
-    desc: "八字+流年，科技味的命盤解讀",
-    vibe: "邏輯與命理的交錯感",
+    id: "cyber",
+    name: { "zh-TW": "賽博算命", "zh-CN": "赛博算命" },
+    desc: {
+      "zh-TW": "八字 + 流年，偏理性解讀",
+      "zh-CN": "八字 + 流年，偏理性解读",
+    },
   },
   {
-    name: "月老 · 姻缘测算",
-    repo: "https://github.com/Ming-H/yinyuan-skills",
-    desc: "聚焦情感、關係和匹配度",
-    vibe: "溫柔、重視連結",
+    id: "love",
+    name: { "zh-TW": "月老 · 姻緣", "zh-CN": "月老 · 姻缘" },
+    desc: {
+      "zh-TW": "聚焦關係與情感節奏",
+      "zh-CN": "聚焦关系与情感节奏",
+    },
   },
   {
-    name: "奇门遁甲 · 紫微斗数",
-    repo: "https://github.com/FANzR-arch/Numerologist_skills",
-    desc: "玄妙的局勢推演與時空感",
-    vibe: "強調布局與時機",
+    id: "qimen",
+    name: { "zh-TW": "奇門 · 紫微", "zh-CN": "奇门 · 紫微" },
+    desc: {
+      "zh-TW": "偏局勢與時機判斷",
+      "zh-CN": "偏局势与时机判断",
+    },
   },
   {
-    name: "大师兜底",
-    repo: "https://github.com/xr843/Master-skill",
-    desc: "通用解讀，適合快速兜底",
-    vibe: "語氣沉穩、方向感強",
+    id: "master",
+    name: { "zh-TW": "大師兜底", "zh-CN": "大师兜底" },
+    desc: {
+      "zh-TW": "通用解讀，語氣穩定",
+      "zh-CN": "通用解读，语气稳定",
+    },
   },
   {
-    name: "X 导师",
-    repo: "https://github.com/alchaincyf/x-mentor-skill",
-    desc: "實戰導師口吻，語氣犀利",
-    vibe: "直接、帶點挑戰",
+    id: "mentor",
+    name: { "zh-TW": "X 導師", "zh-CN": "X 导师" },
+    desc: {
+      "zh-TW": "實戰導師口吻",
+      "zh-CN": "实战导师口吻",
+    },
   },
   {
-    name: "轻量 waza",
-    repo: "https://github.com/tw93/waza",
-    desc: "輕量插件式拼裝，方便擴展",
-    vibe: "自由、拼裝感",
+    id: "waza",
+    name: { "zh-TW": "輕量 waza", "zh-CN": "轻量 waza" },
+    desc: {
+      "zh-TW": "可拼裝擴展",
+      "zh-CN": "可拼装扩展",
+    },
   },
 ];
 
-const focuses = [
-  "全局運勢",
-  "姻緣感情",
-  "事業跳槽",
-  "財富偏正",
-  "健康節奏",
-  "學習考試",
+const focuses: Focus[] = [
+  { id: "overall", label: { "zh-TW": "全局運勢", "zh-CN": "全局运势" } },
+  { id: "love", label: { "zh-TW": "姻緣感情", "zh-CN": "姻缘感情" } },
+  { id: "career", label: { "zh-TW": "事業跳槽", "zh-CN": "事业跳槽" } },
+  { id: "wealth", label: { "zh-TW": "財富偏正", "zh-CN": "财富偏正" } },
+  { id: "health", label: { "zh-TW": "健康節奏", "zh-CN": "健康节奏" } },
+  { id: "study", label: { "zh-TW": "學習考試", "zh-CN": "学习考试" } },
 ];
 
-const palettes = ["霧霾藍", "琥珀金", "暮色紫", "晨曦粉", "竹葉青", "曜石黑"];
+const palette = ["霧霾藍", "琥珀金", "暮色紫", "晨曦粉", "竹葉青", "曜石黑"];
 
-const mantras = [
-  "慢下來，讓直覺說話。",
-  "向內看三秒，再向外走一步。",
-  "保持鬆弛感，機會自然靠近。",
-  "敢做第一個開口的人。",
-  "先交付 60%，剩下的在迭代裡長出來。",
-];
+const fallbackSummary = {
+  "zh-TW": "目前能量偏穩，適合先整頓節奏再推進。先做一件可交付的事，會帶來信心回流。",
+  "zh-CN": "目前能量偏稳，适合先整顿节奏再推进。先做一件可交付的事，会带来信心回流。",
+};
 
-const roadmapLines = {
-  now: [
-    "今天適合清理代辦，把能量集中到一個最重要的決策。",
-    "保持輕量社交，說話留白，讓對方先透露底牌。",
-    "調整作息，早睡一小時，換來更清晰的判斷力。",
+const fallbackHighlights: Record<Lang, string[]> = {
+  "zh-TW": [
+    "聚焦一件可交付的小事，信心會回流。",
+    "把精力集中在 1-2 個真正重要的人。",
+    "本週適合整理節奏，不宜衝動擴張。",
   ],
-  week: [
-    "這週的合作運不錯，勇於提出你的條件，能談成雙贏。",
-    "未來 7 天適合啟動新嘗試：小額投資、side project、短途旅行。",
-    "適合整理作品集或簡歷，會遇到願意傾聽的面試官。",
-  ],
-  month: [
-    "未來 30 天適合建立新習慣，從早起或運動開始。",
-    "留意資源配置，支出做分類會更安心。",
-    "把人脈聚焦在 2-3 位最重要的夥伴。",
-  ],
-  season: [
-    "未來 90 天的關鍵字是「聚焦」。砍掉 1 個不重要的目標。",
-    "下一季適合學一個硬技能，讓自己在團隊中有明確標籤。",
-    "注意現金流與健康，慢跑或瑜伽能撐起耐力。",
+  "zh-CN": [
+    "聚焦一件可交付的小事，信心会回流。",
+    "把精力集中在 1-2 个真正重要的人。",
+    "本周适合整理节奏，不宜冲动扩张。",
   ],
 };
 
-const highlightPool: Highlight[] = [
-  {
-    title: "情感脈絡",
-    body: "感情運升溫，主動的關心會被記住；單身者可在朋友介紹中找到火花。",
-  },
-  {
-    title: "事業節奏",
-    body: "適合提出新方案或轉崗試水，保持實驗心態，你的邏輯會被看到。",
-  },
-  {
-    title: "財務能量",
-    body: "守比攻更重要，避開大額衝動消費；小規模定投能帶來安全感。",
-  },
-  {
-    title: "健康提醒",
-    body: "留意肩頸與睡眠，放下手機 30 分鐘做伸展，換來整天的清醒。",
-  },
-  {
-    title: "學習突破",
-    body: "設定可交付的學習成果：一頁筆記、一段 demo，讓進度可見。",
-  },
-];
+const fallbackLucky = {
+  "zh-TW": { day: "週四", mantra: "慢一點，換來更清楚的判斷。" },
+  "zh-CN": { day: "周四", mantra: "慢一点，换来更清楚的判断。" },
+};
 
-const vibePool = [
-  "你身上帶著『復盤 + 再出發』的氣場，適合重啟或重構。",
-  "你的節奏正在從分散轉向聚焦，把資源投入一個主戰場。",
-  "貴人運在線，多聽比多說，會捕捉到關鍵暗號。",
-  "情緒感受力提升，創作/內容表達會更打動人。",
-  "內心有股穩定的韌性，適合推進長周期項目。",
-];
+const fallbackRoadmap = {
+  "zh-TW": {
+    today: "先處理一個最重要的待辦。",
+    week: "這週適合對外溝通。",
+    month: "建立一個長期習慣。",
+    season: "收斂目標，穩住節奏。",
+  },
+  "zh-CN": {
+    today: "先处理一个最重要的待办。",
+    week: "这周适合对外沟通。",
+    month: "建立一个长期习惯。",
+    season: "收敛目标，稳住节奏。",
+  },
+};
 
-const radarLabels = ["事業", "財富", "關係", "健康", "學習", "能量"];
+const storageKey = "goodlife-saved-v2";
+const langKey = "goodlife-lang";
 
 const defaultBirth = (() => {
   const d = new Date();
@@ -154,69 +207,6 @@ const defaultBirth = (() => {
   return d.toISOString().slice(0, 16);
 })();
 
-function seededRandom(seed: string) {
-  let h = 0;
-  for (const c of seed) {
-    h = Math.imul(31, h) + c.charCodeAt(0);
-  }
-  return () => {
-    h ^= h << 13;
-    h ^= h >>> 17;
-    h ^= h << 5;
-    return ((h >>> 0) % 10000) / 10000;
-  };
-}
-
-function pick<T>(list: T[], rand: () => number) {
-  return list[Math.floor(rand() * list.length)];
-}
-
-function buildReading(seed: string, focus: string, path: string): Reading {
-  const rand = seededRandom(seed);
-  const score = Math.round(68 + rand() * 24);
-  const headline =
-    score > 88
-      ? "好運在敲門，記得開門"
-      : score > 78
-        ? "能量在升溫，請維持節奏"
-        : "先穩住基本盤，再蓄力";
-
-  const highlights = Array.from({ length: 3 }, () => pick(highlightPool, rand));
-
-  const lucky = {
-    color: pick(palettes, rand),
-    number: 1 + Math.floor(rand() * 9),
-    mantra: pick(mantras, rand),
-    day: ["週一", "週二", "週三", "週四", "週五", "週六", "週日"][
-      Math.floor(rand() * 7)
-    ],
-  };
-
-  const roadmap = {
-    now: pick(roadmapLines.now, rand),
-    week: pick(roadmapLines.week, rand),
-    month: pick(roadmapLines.month, rand),
-    season: pick(roadmapLines.season, rand),
-  };
-
-  const radar = radarLabels.map((label) => ({
-    label,
-    value: Math.round(50 + rand() * 45),
-  }));
-
-  return {
-    headline,
-    score,
-    vibe: pick(vibePool, rand),
-    focus,
-    path,
-    highlights,
-    lucky,
-    roadmap,
-    radar,
-  };
-}
-
 const formatDate = (value: string) => {
   const d = new Date(value);
   return `${d.getFullYear()}/${d.getMonth() + 1}/${d.getDate()} ${String(
@@ -224,19 +214,24 @@ const formatDate = (value: string) => {
   ).padStart(2, "0")}:${String(d.getMinutes()).padStart(2, "0")}`;
 };
 
-const storageKey = "goodlife-saved";
-
 function App() {
+  const [lang, setLang] = useState<Lang>("zh-TW");
+  const t = i18n[lang];
+
   const [form, setForm] = useState({
     name: "旅人",
     birth: defaultBirth,
-    focus: focuses[0],
-    path: flows[0].name,
+    focus: focuses[0].id,
+    path: flows[0].id,
     wish: "希望今年能有突破感",
   });
-  const [saved, setSaved] = useState<SavedReading[]>([]);
+
   const [saving, setSaving] = useState(false);
   const [sharing, setSharing] = useState(false);
+  const [loadingAI, setLoadingAI] = useState(false);
+  const [aiResult, setAiResult] = useState<AIResult | null>(null);
+  const [aiError, setAiError] = useState<string | null>(null);
+  const [saved, setSaved] = useState<SavedReading[]>([]);
   const shareRef = useRef<HTMLDivElement>(null);
 
   useEffect(() => {
@@ -244,23 +239,25 @@ function App() {
     if (stored) {
       setSaved(JSON.parse(stored));
     }
+    const storedLang = localStorage.getItem(langKey) as Lang | null;
+    if (storedLang) {
+      setLang(storedLang);
+    }
   }, []);
 
   useEffect(() => {
     localStorage.setItem(storageKey, JSON.stringify(saved.slice(0, 8)));
   }, [saved]);
 
-  const reading = useMemo(
-    () => buildReading(JSON.stringify(form), form.focus, form.path),
-    [form]
-  );
+  useEffect(() => {
+    localStorage.setItem(langKey, lang);
+  }, [lang]);
 
-  const compareReadings = useMemo(() => {
-    return flows.map((flow) => ({
-      flow,
-      reading: buildReading(`${form.name}-${flow.name}-${form.birth}`, form.focus, flow.name),
-    }));
-  }, [form]);
+  const flow = useMemo(() => flows.find((f) => f.id === form.path) ?? flows[0], [form.path]);
+  const focus = useMemo(
+    () => focuses.find((f) => f.id === form.focus) ?? focuses[0],
+    [form.focus]
+  );
 
   const update = (key: keyof typeof form) => (value: string) =>
     setForm((prev) => ({ ...prev, [key]: value }));
@@ -270,15 +267,13 @@ function App() {
     const item: SavedReading = {
       id: `${Date.now()}`,
       name: form.name,
-      focus: form.focus,
-      path: form.path,
-      headline: reading.headline,
-      score: reading.score,
-      vibe: reading.vibe,
+      focus: focus.label[lang],
+      path: flow.name[lang],
+      headline: aiResult?.headline ?? t.result,
       date: new Date().toISOString(),
     };
     setSaved((prev) => [item, ...prev].slice(0, 8));
-    setTimeout(() => setSaving(false), 700);
+    setTimeout(() => setSaving(false), 600);
   };
 
   const onShare = async () => {
@@ -295,279 +290,245 @@ function App() {
     }
   };
 
+  const onGenerate = async () => {
+    setLoadingAI(true);
+    setAiError(null);
+    try {
+      const res = await fetch("/api/fortune", {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({
+          name: form.name,
+          birth: form.birth,
+          focus: focus.label[lang],
+          path: flow.name[lang],
+          wish: form.wish,
+          lang,
+        }),
+      });
+      const json = await res.json();
+      if (!json.ok) {
+        setAiError(json.error ?? "API error");
+        setAiResult(null);
+        return;
+      }
+      const data = json.data as AIResult;
+      setAiResult(data);
+    } catch (error) {
+      setAiError(error instanceof Error ? error.message : "Unknown error");
+      setAiResult(null);
+    } finally {
+      setLoadingAI(false);
+    }
+  };
+
   return (
-    <div className="min-h-screen text-slate-900">
-      <div className="mx-auto max-w-6xl px-6 pb-16 pt-12 md:pt-16">
-        <header className="relative overflow-hidden rounded-[32px] bg-white/80 p-8 shadow-xl ring-1 ring-slate-200 backdrop-blur">
-          <div className="absolute inset-0 bg-orbit opacity-70" />
-          <div className="relative z-10 grid gap-6 md:grid-cols-[1.4fr_1fr]">
-            <div>
-              <p className="inline-flex items-center gap-2 rounded-full bg-amber-100/70 px-3 py-1 text-xs font-semibold uppercase tracking-[0.2em] text-amber-700">
-                GoodLife Ritual Lab
-              </p>
-              <h1 className="mt-4 text-4xl font-black leading-tight tracking-tight md:text-5xl">
-                GoodLife 算命工作室
-              </h1>
-              <p className="mt-4 max-w-2xl text-lg text-slate-600">
-                這是一份靈感驅動的運勢工作台。輸入你的生辰、心願與當下課題，選擇流派，即刻生成
-                可分享的「命盤筆記」。
-              </p>
-              <div className="mt-6 flex flex-wrap gap-3 text-sm">
-                <span className="rounded-full bg-slate-900 px-3 py-1 text-white">即時生成</span>
-                <span className="rounded-full bg-white px-3 py-1 text-slate-700 ring-1 ring-slate-200">
-                  靜態部署
-                </span>
-                <span className="rounded-full bg-white px-3 py-1 text-slate-700 ring-1 ring-slate-200">
-                  可分享圖卡
-                </span>
-              </div>
-            </div>
-            <div className="grid gap-4">
-              <div className="rounded-3xl bg-slate-900 p-5 text-white shadow-lg">
-                <p className="text-xs uppercase tracking-[0.2em] text-slate-300">Cloudflare Ready</p>
-                <p className="mt-2 text-lg font-semibold">Vite + React + Tailwind</p>
-                <p className="mt-3 text-sm text-slate-300">
-                  直接部署到 Pages，或加上 Workers 接 API。
-                </p>
-              </div>
-              <div className="rounded-3xl border border-slate-200 bg-white/90 p-5 shadow-sm">
-                <p className="text-sm font-semibold text-slate-700">今日儀式</p>
-                <ol className="mt-2 list-decimal space-y-1 pl-4 text-sm text-slate-600">
-                  <li>選一個主題，鎖定能量焦點。</li>
-                  <li>閱讀本季指引，挑 1 件事去做。</li>
-                  <li>生成分享卡，送給未來的自己。</li>
-                </ol>
-              </div>
+    <div className="min-h-screen bg-sand text-slate-900">
+      <div className="mx-auto max-w-6xl px-6 pb-16 pt-12">
+        <header className="flex flex-col gap-6 border-b border-slate-200 pb-8 md:flex-row md:items-end md:justify-between">
+          <div>
+            <p className="text-xs font-semibold uppercase tracking-[0.3em] text-slate-400">GoodLife Studio</p>
+            <h1 className="mt-3 text-4xl font-semibold md:text-5xl">{t.title}</h1>
+            <p className="mt-3 max-w-2xl text-base text-slate-600">{t.subtitle}</p>
+          </div>
+          <div className="flex items-center gap-3">
+            <span className="text-xs font-semibold text-slate-400">{t.langLabel}</span>
+            <div className="flex rounded-full border border-slate-200 bg-white p-1 text-xs">
+              <button
+                onClick={() => setLang("zh-TW")}
+                className={`rounded-full px-3 py-1 ${lang === "zh-TW" ? "bg-slate-900 text-white" : "text-slate-500"}`}
+              >
+                繁體
+              </button>
+              <button
+                onClick={() => setLang("zh-CN")}
+                className={`rounded-full px-3 py-1 ${lang === "zh-CN" ? "bg-slate-900 text-white" : "text-slate-500"}`}
+              >
+                简体
+              </button>
             </div>
           </div>
         </header>
 
-        <main className="mt-8 grid gap-6 lg:grid-cols-[1.15fr_1fr]">
-          <section className="rounded-[32px] bg-white/90 p-6 shadow-xl ring-1 ring-slate-200 backdrop-blur">
-            <div className="flex flex-wrap items-center justify-between gap-3">
-              <h2 className="text-xl font-semibold">命盤輸入</h2>
-              <div className="flex gap-2 text-xs text-slate-500">
-                <span className="rounded-full bg-slate-100 px-3 py-1">自動保存</span>
-                <span className="rounded-full bg-slate-100 px-3 py-1">一鍵分享</span>
+        <main className="mt-10 grid gap-8 lg:grid-cols-[1.1fr_1fr]">
+          <section className="space-y-6">
+            <div className="rounded-3xl border border-slate-200 bg-white p-6 shadow-sm">
+              <div className="flex items-center justify-between">
+                <h2 className="text-lg font-semibold">{t.input}</h2>
+                <span className="rounded-full bg-slate-100 px-3 py-1 text-xs text-slate-500">{t.ritual}</span>
+              </div>
+
+              <div className="mt-5 grid gap-4 md:grid-cols-2">
+                <div className="space-y-2">
+                  <label className="text-sm font-medium text-slate-600">{t.name}</label>
+                  <input
+                    className="w-full rounded-2xl border border-slate-200 bg-white px-3 py-2 text-slate-800 focus:border-slate-400 focus:outline-none"
+                    value={form.name}
+                    onChange={(e) => update("name")(e.target.value)}
+                  />
+                </div>
+                <div className="space-y-2">
+                  <label className="text-sm font-medium text-slate-600">{t.birth}</label>
+                  <input
+                    type="datetime-local"
+                    className="w-full rounded-2xl border border-slate-200 bg-white px-3 py-2 text-slate-800 focus:border-slate-400 focus:outline-none"
+                    value={form.birth}
+                    onChange={(e) => update("birth")(e.target.value)}
+                  />
+                </div>
+                <div className="space-y-2 md:col-span-2">
+                  <label className="text-sm font-medium text-slate-600">{t.wish}</label>
+                  <input
+                    className="w-full rounded-2xl border border-slate-200 bg-white px-3 py-2 text-slate-800 focus:border-slate-400 focus:outline-none"
+                    value={form.wish}
+                    onChange={(e) => update("wish")(e.target.value)}
+                  />
+                </div>
               </div>
             </div>
 
-            <div className="mt-5 grid gap-4 md:grid-cols-2">
-              <div className="space-y-2">
-                <label className="text-sm font-semibold text-slate-600">你的稱呼</label>
-                <input
-                  className="w-full rounded-2xl border border-slate-200 bg-white px-3 py-2 text-slate-800 shadow-sm focus:border-amber-400 focus:outline-none focus:ring-2 focus:ring-amber-200"
-                  value={form.name}
-                  onChange={(e) => update("name")(e.target.value)}
-                  placeholder="例：阿月 / Traveler"
-                />
-              </div>
-              <div className="space-y-2">
-                <label className="text-sm font-semibold text-slate-600">出生日期與時間</label>
-                <input
-                  type="datetime-local"
-                  className="w-full rounded-2xl border border-slate-200 bg-white px-3 py-2 text-slate-800 shadow-sm focus:border-amber-400 focus:outline-none focus:ring-2 focus:ring-amber-200"
-                  value={form.birth}
-                  onChange={(e) => update("birth")(e.target.value)}
-                />
-              </div>
-              <div className="space-y-2 md:col-span-2">
-                <label className="text-sm font-semibold text-slate-600">目前的心願 / 煩惱</label>
-                <input
-                  className="w-full rounded-2xl border border-slate-200 bg-white px-3 py-2 text-slate-800 shadow-sm focus:border-amber-400 focus:outline-none focus:ring-2 focus:ring-amber-200"
-                  value={form.wish}
-                  onChange={(e) => update("wish")(e.target.value)}
-                  placeholder="例：想換工作但怕不穩 / 想遇到好對象"
-                />
-              </div>
-            </div>
-
-            <div className="mt-5 space-y-3">
-              <p className="text-sm font-semibold text-slate-600">想聚焦的主題</p>
-              <div className="grid grid-cols-2 gap-2 md:grid-cols-3">
-                {focuses.map((f) => (
+            <div className="rounded-3xl border border-slate-200 bg-white p-6 shadow-sm">
+              <h3 className="text-sm font-semibold text-slate-600">{t.focus}</h3>
+              <div className="mt-3 grid grid-cols-2 gap-2 md:grid-cols-3">
+                {focuses.map((item) => (
                   <button
-                    key={f}
-                    onClick={() => update("focus")(f)}
-                    className={`rounded-2xl px-3 py-2 text-sm font-semibold transition ${
-                      form.focus === f
-                        ? "bg-slate-900 text-white shadow-md"
-                        : "bg-slate-100 text-slate-700 hover:bg-slate-200"
+                    key={item.id}
+                    onClick={() => update("focus")(item.id)}
+                    className={`rounded-full px-3 py-2 text-sm transition ${
+                      form.focus === item.id
+                        ? "bg-slate-900 text-white"
+                        : "bg-slate-100 text-slate-600 hover:bg-slate-200"
                     }`}
                   >
-                    {f}
+                    {item.label[lang]}
                   </button>
                 ))}
               </div>
             </div>
 
-            <div className="mt-5 space-y-3">
-              <p className="text-sm font-semibold text-slate-600">流派選擇 · 靈感來源</p>
-              <div className="grid gap-3 md:grid-cols-2">
-                {flows.map((flow) => (
+            <div className="rounded-3xl border border-slate-200 bg-white p-6 shadow-sm">
+              <h3 className="text-sm font-semibold text-slate-600">{t.flow}</h3>
+              <div className="mt-4 grid gap-3 md:grid-cols-2">
+                {flows.map((item) => (
                   <button
-                    key={flow.name}
-                    onClick={() => update("path")(flow.name)}
-                    className={`flex w-full items-start gap-3 rounded-3xl border px-4 py-3 text-left transition ${
-                      form.path === flow.name
-                        ? "border-amber-400 bg-amber-50/80 shadow-sm"
-                        : "border-slate-200 bg-white hover:border-amber-200"
+                    key={item.id}
+                    onClick={() => update("path")(item.id)}
+                    className={`rounded-3xl border px-4 py-3 text-left transition ${
+                      form.path === item.id
+                        ? "border-slate-900 bg-slate-50"
+                        : "border-slate-200 bg-white hover:border-slate-400"
                     }`}
                   >
-                    <div className="h-12 w-12 rounded-2xl bg-gradient-to-br from-amber-400 to-rose-400"></div>
-                    <div>
-                      <p className="text-sm font-bold text-slate-800">{flow.name}</p>
-                      <p className="text-xs text-slate-500">{flow.desc}</p>
-                      <p className="mt-1 text-xs text-slate-400">{flow.vibe}</p>
-                      <span className="mt-1 inline-flex text-xs font-semibold text-amber-700">
-                        GitHub 倉庫
-                      </span>
-                    </div>
+                    <p className="text-sm font-semibold text-slate-800">{item.name[lang]}</p>
+                    <p className="text-xs text-slate-500">{item.desc[lang]}</p>
                   </button>
                 ))}
               </div>
             </div>
           </section>
 
-          <section className="flex flex-col gap-4">
-            <div ref={shareRef} className="rounded-[32px] bg-slate-900 p-6 text-white shadow-2xl ring-1 ring-slate-800">
-              <div className="flex flex-wrap items-center justify-between gap-3">
+          <section className="space-y-6">
+            <div ref={shareRef} className="rounded-3xl border border-slate-200 bg-white p-6 shadow-sm">
+              <div className="flex items-start justify-between gap-4">
                 <div>
-                  <p className="text-xs uppercase tracking-[0.2em] text-slate-300">今日調頻</p>
-                  <h3 className="mt-2 text-2xl font-black">{reading.headline}</h3>
-                  <p className="mt-2 text-sm text-slate-300">
-                    {form.name} · {formatDate(form.birth)}
+                  <p className="text-xs uppercase tracking-[0.3em] text-slate-400">{t.result}</p>
+                  <h3 className="mt-2 text-2xl font-semibold text-slate-900">
+                    {aiResult?.headline ?? t.result}
+                  </h3>
+                  <p className="mt-2 text-sm text-slate-500">
+                    {form.name} · {formatDate(form.birth)} · {focus.label[lang]}
                   </p>
                 </div>
-                <div className="flex items-center gap-2 rounded-2xl bg-white/10 px-3 py-2">
-                  <div className="h-10 w-10 rounded-full bg-gradient-to-br from-amber-400 to-rose-500"></div>
-                  <div>
-                    <p className="text-xs text-slate-200">GoodLife 指數</p>
-                    <p className="text-lg font-semibold">{reading.score} / 100</p>
+                <div className="rounded-2xl bg-slate-900 px-3 py-2 text-xs text-white">
+                  {flow.name[lang]}
+                </div>
+              </div>
+
+              {aiError && (
+                <div className="mt-4 rounded-2xl border border-rose-200 bg-rose-50 px-3 py-2 text-sm text-rose-700">
+                  {aiError}
+                </div>
+              )}
+
+              <div className="mt-4 space-y-4 text-sm text-slate-700">
+                <div>
+                  <p className="text-xs font-semibold text-slate-400">{t.summary}</p>
+                  <p className="mt-2">{aiResult?.summary ?? fallbackSummary[lang]}</p>
+                </div>
+                <div>
+                  <p className="text-xs font-semibold text-slate-400">{t.highlights}</p>
+                  <ul className="mt-2 space-y-1">
+                    {(aiResult?.highlights ?? []).length > 0
+                      ? aiResult?.highlights.map((item, idx) => (
+                          <li key={idx} className="rounded-xl bg-slate-50 px-3 py-2">
+                            {item}
+                          </li>
+                        ))
+                      : fallbackHighlights[lang].map((item, idx) => (
+                          <li key={idx} className="rounded-xl bg-slate-50 px-3 py-2">
+                            {item}
+                          </li>
+                        ))}
+                  </ul>
+                </div>
+                <div className="grid gap-3 md:grid-cols-2">
+                  <div className="rounded-2xl border border-slate-200 bg-white px-3 py-2">
+                    <p className="text-xs font-semibold text-slate-400">{t.lucky}</p>
+                    <p className="mt-2 text-sm">
+                      {aiResult?.lucky?.color ?? palette[0]} · {aiResult?.lucky?.number ?? 6}
+                    </p>
+                    <p className="text-xs text-slate-500">{aiResult?.lucky?.day ?? fallbackLucky[lang].day}</p>
+                    <p className="mt-2 text-xs text-slate-500">{aiResult?.lucky?.mantra ?? fallbackLucky[lang].mantra}</p>
                   </div>
-                </div>
-              </div>
-
-              <div className="mt-4 grid gap-3">
-                <div className="rounded-2xl bg-white/5 px-4 py-3">
-                  <p className="text-xs text-slate-300">主題 · 流派</p>
-                  <p className="text-sm font-semibold text-white">
-                    {reading.focus} · {reading.path}
-                  </p>
-                </div>
-                <div className="rounded-2xl bg-white/5 px-4 py-3">
-                  <p className="text-xs text-slate-300">氣場描述</p>
-                  <p className="text-sm leading-relaxed text-slate-100">{reading.vibe}</p>
-                </div>
-                <div className="rounded-2xl bg-white/5 px-4 py-3">
-                  <p className="text-xs text-slate-300">今日心願</p>
-                  <p className="text-sm text-slate-100">{form.wish}</p>
-                </div>
-              </div>
-
-              <div className="mt-4 grid gap-3">
-                {reading.highlights.map((item, idx) => (
-                  <div
-                    key={idx}
-                    className="rounded-2xl border border-white/10 bg-white/5 px-4 py-3"
-                  >
-                    <p className="text-sm font-semibold text-white">{item.title}</p>
-                    <p className="text-sm text-slate-200">{item.body}</p>
+                  <div className="rounded-2xl border border-slate-200 bg-white px-3 py-2">
+                    <p className="text-xs font-semibold text-slate-400">{t.roadmap}</p>
+                    <div className="mt-2 space-y-2 text-xs text-slate-600">
+                      <p>{t.today}：{aiResult?.roadmap?.today ?? fallbackRoadmap[lang].today}</p>
+                      <p>{t.week}：{aiResult?.roadmap?.week ?? fallbackRoadmap[lang].week}</p>
+                      <p>{t.month}：{aiResult?.roadmap?.month ?? fallbackRoadmap[lang].month}</p>
+                      <p>{t.season}：{aiResult?.roadmap?.season ?? fallbackRoadmap[lang].season}</p>
+                    </div>
                   </div>
-                ))}
-              </div>
-
-              <div className="mt-4 grid gap-3 md:grid-cols-2">
-                <div className="rounded-2xl border border-white/10 bg-white/5 px-4 py-3">
-                  <p className="text-xs text-slate-300">幸運信號</p>
-                  <p className="text-sm text-slate-100">
-                    色彩：{reading.lucky.color} ｜ 數字：{reading.lucky.number}
-                  </p>
-                  <p className="text-sm text-slate-100">開運日：{reading.lucky.day}</p>
-                </div>
-                <div className="rounded-2xl border border-white/10 bg-white/5 px-4 py-3">
-                  <p className="text-xs text-slate-300">今日咒語</p>
-                  <p className="text-sm text-slate-100">{reading.lucky.mantra}</p>
-                </div>
-              </div>
-
-              <div className="mt-4 grid gap-3 md:grid-cols-4">
-                <div className="rounded-2xl bg-white/5 px-4 py-3 text-sm text-slate-100">
-                  <p className="text-xs text-slate-300">今天</p>
-                  {reading.roadmap.now}
-                </div>
-                <div className="rounded-2xl bg-white/5 px-4 py-3 text-sm text-slate-100">
-                  <p className="text-xs text-slate-300">本週</p>
-                  {reading.roadmap.week}
-                </div>
-                <div className="rounded-2xl bg-white/5 px-4 py-3 text-sm text-slate-100">
-                  <p className="text-xs text-slate-300">本月</p>
-                  {reading.roadmap.month}
-                </div>
-                <div className="rounded-2xl bg-white/5 px-4 py-3 text-sm text-slate-100">
-                  <p className="text-xs text-slate-300">本季</p>
-                  {reading.roadmap.season}
                 </div>
               </div>
             </div>
 
             <div className="grid gap-3 md:grid-cols-2">
               <button
-                onClick={onShare}
-                className="rounded-2xl bg-amber-500 px-4 py-3 text-sm font-semibold text-white shadow-lg transition hover:bg-amber-400"
+                onClick={onGenerate}
+                className="rounded-2xl bg-slate-900 px-4 py-3 text-sm font-semibold text-white hover:bg-slate-800 disabled:cursor-not-allowed disabled:bg-slate-400"
+                disabled={loadingAI}
               >
-                {sharing ? "生成中..." : "生成分享卡"}
+                {loadingAI ? t.generating : t.generate}
+              </button>
+              <button
+                onClick={onShare}
+                className="rounded-2xl border border-slate-200 bg-white px-4 py-3 text-sm font-semibold text-slate-700 hover:border-slate-400"
+              >
+                {sharing ? t.generating : t.share}
               </button>
               <button
                 onClick={onSave}
-                className="rounded-2xl bg-white px-4 py-3 text-sm font-semibold text-slate-700 shadow-lg ring-1 ring-slate-200 transition hover:bg-slate-50"
+                className="rounded-2xl border border-slate-200 bg-white px-4 py-3 text-sm font-semibold text-slate-700 hover:border-slate-400 md:col-span-2"
               >
-                {saving ? "已保存" : "保存本次運勢"}
+                {saving ? t.saving : t.save}
               </button>
             </div>
 
-            <div className="rounded-[32px] bg-white/90 p-5 shadow-xl ring-1 ring-slate-200">
+            <div className="rounded-3xl border border-slate-200 bg-white p-5 shadow-sm">
               <div className="flex items-center justify-between">
-                <h3 className="text-sm font-semibold text-slate-700">命盤雷達</h3>
-                <span className="text-xs text-slate-500">0 - 100</span>
+                <h3 className="text-sm font-semibold text-slate-600">{t.saved}</h3>
+                <span className="text-xs text-slate-400">{saved.length}/8</span>
               </div>
-              <div className="mt-3 space-y-2">
-                {reading.radar.map((item) => (
-                  <div key={item.label} className="flex items-center gap-3">
-                    <span className="w-14 text-xs text-slate-500">{item.label}</span>
-                    <div className="h-2 flex-1 rounded-full bg-slate-100">
-                      <div
-                        className="h-2 rounded-full bg-gradient-to-r from-amber-400 to-rose-400"
-                        style={{ width: `${item.value}%` }}
-                      />
-                    </div>
-                    <span className="w-8 text-xs text-slate-500">{item.value}</span>
-                  </div>
-                ))}
-              </div>
-            </div>
-
-            <div className="rounded-[32px] bg-white/90 p-5 shadow-xl ring-1 ring-slate-200">
-              <h3 className="text-sm font-semibold text-slate-700">保存紀錄</h3>
               <div className="mt-3 space-y-3">
-                {saved.length === 0 && (
-                  <p className="text-sm text-slate-500">尚未保存任何紀錄。</p>
-                )}
+                {saved.length === 0 && <p className="text-sm text-slate-500">{t.emptySaved}</p>}
                 {saved.map((item) => (
-                  <div
-                    key={item.id}
-                    className="rounded-2xl border border-slate-200 bg-white px-3 py-2"
-                  >
+                  <div key={item.id} className="rounded-2xl border border-slate-200 px-3 py-2">
                     <div className="flex items-center justify-between">
-                      <p className="text-sm font-semibold text-slate-700">
-                        {item.name} · {item.focus}
-                      </p>
-                      <span className="text-xs text-slate-400">
-                        {new Date(item.date).toLocaleDateString()}
-                      </span>
+                      <p className="text-sm font-semibold text-slate-700">{item.name} · {item.focus}</p>
+                      <span className="text-xs text-slate-400">{new Date(item.date).toLocaleDateString()}</span>
                     </div>
                     <p className="text-xs text-slate-500">{item.path} · {item.headline}</p>
-                    <p className="text-xs text-slate-400">指數 {item.score} · {item.vibe}</p>
                   </div>
                 ))}
               </div>
@@ -575,43 +536,30 @@ function App() {
           </section>
         </main>
 
-        <section className="mt-10 rounded-[32px] bg-white/90 p-6 shadow-xl ring-1 ring-slate-200">
-          <div className="flex flex-wrap items-end justify-between gap-3">
-            <div>
-              <h2 className="text-xl font-semibold">流派對比視圖</h2>
-              <p className="text-sm text-slate-500">同一主題，不同流派的氣質差異。</p>
-            </div>
-            <p className="text-xs text-slate-400">自動生成比較結果</p>
-          </div>
-          <div className="mt-4 grid gap-3 md:grid-cols-3">
-            {compareReadings.map(({ flow, reading }) => (
-              <div key={flow.name} className="rounded-2xl border border-slate-200 bg-white p-4 shadow-sm">
-                <p className="text-sm font-semibold text-slate-800">{flow.name}</p>
-                <p className="text-xs text-slate-500">{flow.vibe}</p>
-                <div className="mt-3 flex items-center justify-between">
-                  <span className="text-xs text-slate-400">GoodLife 指數</span>
-                  <span className="text-sm font-semibold text-slate-700">{reading.score}</span>
-                </div>
-                <p className="mt-2 text-xs text-slate-500">{reading.vibe}</p>
+        <section className="mt-10 grid gap-6 md:grid-cols-2">
+          <div className="rounded-3xl border border-slate-200 bg-white p-6 shadow-sm">
+            <div className="flex items-end justify-between">
+              <div>
+                <h3 className="text-sm font-semibold text-slate-700">{t.compareTitle}</h3>
+                <p className="text-xs text-slate-500">{t.compareDesc}</p>
               </div>
-            ))}
+              <span className="text-xs text-slate-400">{focus.label[lang]}</span>
+            </div>
+            <div className="mt-4 grid gap-3 md:grid-cols-2">
+              {flows.map((item) => (
+                <div key={item.id} className="rounded-2xl border border-slate-200 bg-slate-50 px-3 py-2">
+                  <p className="text-sm font-semibold text-slate-700">{item.name[lang]}</p>
+                  <p className="text-xs text-slate-500">{item.desc[lang]}</p>
+                </div>
+              ))}
+            </div>
           </div>
-        </section>
-
-        <section className="mt-8 grid gap-4 md:grid-cols-2">
-          <div className="rounded-[32px] bg-white/90 p-6 shadow-xl ring-1 ring-slate-200">
-            <h3 className="text-sm font-semibold text-slate-700">體驗升級清單</h3>
-            <ul className="mt-3 space-y-2 text-sm text-slate-600">
-              <li>儀式感輸入 + 即時結果卡 + 分享圖卡</li>
-              <li>保存紀錄，形成個人運勢時間線</li>
-              <li>流派對比視圖，觀察多元解讀</li>
-              <li>命盤雷達與行動路徑，適合做成週報</li>
-            </ul>
-          </div>
-          <div className="rounded-[32px] bg-white/90 p-6 shadow-xl ring-1 ring-slate-200">
-            <h3 className="text-sm font-semibold text-slate-700">免責聲明</h3>
-            <p className="mt-3 text-sm text-slate-600">
-              本站內容為靈感與娛樂用途，不構成投資、醫療、法律或其他專業建議。請以自我判斷為準。
+          <div className="rounded-3xl border border-slate-200 bg-white p-6 shadow-sm">
+            <h3 className="text-sm font-semibold text-slate-700">{t.disclaimer}</h3>
+            <p className="mt-3 text-sm text-slate-500">
+              {lang === "zh-CN"
+                ? "本服务不提供投资/医疗/法律建议，请以自我判断为准。"
+                : "本服務不提供投資/醫療/法律建議，請以自我判斷為準。"}
             </p>
           </div>
         </section>
