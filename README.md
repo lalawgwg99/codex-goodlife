@@ -9,11 +9,32 @@
 - Cloudflare Ready：Vite + React + Tailwind；預設 build 指令 `npm run build`，發布目錄 `dist`。
  - AI 解讀：透過 Cloudflare Pages Functions 呼叫 OpenRouter（OpenAI SDK）。
 
-## 快速開始
+## 快速開始（本地）
 ```bash
 npm install
 npm run dev   # http://localhost:5173
 ```
+
+## 必要設定（Cloudflare Pages）
+此專案使用 Pages Functions 呼叫 OpenRouter AI，需要在 Cloudflare Pages 設定環境變數。
+
+### 1) Cloudflare Pages 專案設定
+- Framework：Vite
+- Build command：`npm run build`
+- Build output directory：`dist`
+
+### 2) 環境變數（必填）
+在 Cloudflare Pages → Settings → Environment variables 新增：
+- `OPENROUTER_API_KEY`：你的 OpenRouter API Key（必填）
+
+### 3) 環境變數（可選）
+- `OPENROUTER_MODEL`：模型名稱（預設 `qwen/qwen3.6-plus:free`）
+- `OPENROUTER_BASE_URL`：Base URL（預設 `https://openrouter.ai/api/v1`）
+- `OPENROUTER_REFERER`：如 OpenRouter 要求 referer，再填
+- `OPENROUTER_TITLE`：可填站點名稱，便於追蹤
+
+### 4) 驗證
+部署後打開網站，點「生成 AI 解讀」即可測試。
 
 ## 建置
 ```bash
@@ -21,21 +42,8 @@ npm run build
 # 輸出在 dist/
 ```
 
-## 部署到 Cloudflare Pages
-1) 新建站點，選擇「框架預設：Vite」。  
-2) Build command：`npm run build`  
-3) Build output directory：`dist`  
-4) 保存並部署；本專案已內建 Pages Functions。  
-
-### OpenRouter 環境變數
-在 Cloudflare Pages 的環境變數設定：
-- `OPENROUTER_API_KEY`（必填）
-- `OPENROUTER_MODEL`（可選，預設 `qwen/qwen3.6-plus:free`）
-- `OPENROUTER_BASE_URL`（可選，預設 `https://openrouter.ai/api/v1`）
-- `OPENROUTER_REFERER`（可選，若 OpenRouter 需要）
-- `OPENROUTER_TITLE`（可選，若 OpenRouter 需要）
-
-前端會呼叫 `POST /api/fortune` 取得 AI 解讀內容。
+## API 端點
+前端會呼叫 `POST /api/fortune`，由 Cloudflare Pages Functions 代理 OpenRouter。
 
 ## 自訂
 - 調整流派來源：修改 `src/App.tsx` 的 `flows` 陣列。
