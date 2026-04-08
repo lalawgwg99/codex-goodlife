@@ -7,6 +7,7 @@ type Flow = {
   id: string;
   name: Record<Lang, string>;
   desc: Record<Lang, string>;
+  tag: Record<Lang, string>;
 };
 
 type Focus = {
@@ -14,10 +15,21 @@ type Focus = {
   label: Record<Lang, string>;
 };
 
+type Choice = {
+  id: string;
+  label: Record<Lang, string>;
+};
+
+type Section = {
+  title: string;
+  body: string;
+};
+
 type AIResult = {
   headline: string;
   summary: string;
   highlights: string[];
+  sections?: Section[];
   lucky: { color: string; number: number; day: string; mantra: string };
   roadmap: { today: string; week: string; month: string; season: string };
   raw?: string;
@@ -32,68 +44,132 @@ type SavedReading = {
   date: string;
 };
 
-const i18n = {
+const copy = {
   "zh-TW": {
-    title: "GoodLife 命理工作室",
-    subtitle: "簡單大方的命盤輸入與 AI 解讀，一鍵生成可分享的運勢筆記。",
-    ritual: "今天的儀式",
-    input: "命盤輸入",
-    name: "你的稱呼",
+    eyebrow: "Oracle Atelier",
+    heroTitle: "不是算命頁，\n是你的命理編輯室。",
+    heroBody:
+      "把輸入、判讀、圖像和分享重新做成一個完整體驗。資料輸入像建檔，結果輸出像一本只屬於你的小型命理刊物。",
+    heroNote: "Cloudflare Pages + OpenRouter",
+    heroTagA: "雙語切換",
+    heroTagB: "AI 報告",
+    heroTagC: "分享海報",
+    lang: "語言",
+    panelTitle: "建檔區",
+    panelBody: "填得越像真實人生，結果越像一份有判斷力的解讀。",
+    identityTitle: "身份輪廓",
+    contextTitle: "情境設定",
+    questionTitle: "提問核心",
+    name: "稱呼",
     birth: "出生日期與時間",
-    wish: "目前的心願 / 煩惱",
-    focus: "想聚焦的主題",
-    flow: "流派選擇",
-    generate: "生成 AI 解讀",
-    generating: "生成中...",
-    share: "生成分享卡",
-    saving: "已保存",
-    save: "保存本次運勢",
-    result: "AI 解讀",
-    summary: "摘要",
-    highlights: "重點",
-    lucky: "幸運信號",
-    roadmap: "行動路徑",
+    birthPlace: "出生地",
+    gender: "性別",
+    status: "目前狀態",
+    certainty: "時辰可信度",
+    focus: "主題焦點",
+    flow: "解讀流派",
+    wish: "目前最想問的事",
+    signalTitle: "命理信號板",
+    signalBody: "把抽象占測結果轉成一眼能看懂的節奏與張力。",
+    reportTitle: "本次命理報告",
+    reportLead: "以 AI 整理成可讀、可截圖、可回看的私人解讀。",
+    generate: "生成 AI 命盤",
+    generating: "命盤整理中...",
+    share: "下載分享海報",
+    sharing: "海報輸出中...",
+    save: "保存本次結果",
+    saved: "已保存",
+    summary: "總覽判讀",
+    highlights: "三個關鍵提醒",
+    sectionsTitle: "重點分區",
+    lucky: "開運提示",
+    roadmap: "時間節奏",
+    radarTitle: "能量星圖",
+    radarBody: "不是傳統硬命盤，而是為一般人設計的可理解圖表。",
+    archiveTitle: "最近保存",
+    archiveEmpty: "還沒有保存紀錄，先做出第一份報告。",
+    compareTitle: "不同流派怎麼看你",
+    compareBody: "不是誰更準，而是每一派關注的重點不同。",
+    footerTitle: "使用提醒",
+    footerBody: "娛樂用途，不構成投資、醫療、法律等專業建議。",
+    aiError: "AI 目前沒有成功回傳結果，先檢查 Cloudflare 環境變數或稍後重試。",
     today: "今天",
     week: "本週",
     month: "本月",
     season: "本季",
-    saved: "保存紀錄",
-    emptySaved: "尚未保存任何紀錄。",
-    disclaimer: "本站內容僅供娛樂用途，不構成專業建議。",
-    langLabel: "語言",
-    compareTitle: "流派對比",
-    compareDesc: "同一主題，不同流派語氣差異。",
+    scoreA: "行動感",
+    scoreB: "穩定度",
+    scoreC: "機會窗",
+    scoreD: "情緒面",
+    scoreE: "關係流",
+    scoreF: "財務感",
+    summaryHintA: "資料完整度",
+    summaryHintB: "流派傾向",
+    summaryHintC: "主題濃度",
+    posterMark: "PRIVATE DOSSIER",
   },
   "zh-CN": {
-    title: "GoodLife 命理工作室",
-    subtitle: "简洁清爽的命盘输入与 AI 解读，一键生成可分享的运势笔记。",
-    ritual: "今天的仪式",
-    input: "命盘输入",
-    name: "你的称呼",
+    eyebrow: "Oracle Atelier",
+    heroTitle: "不是算命页，\n是你的命理编辑室。",
+    heroBody:
+      "把输入、判读、图像和分享重新做成一个完整体验。资料输入像建档，结果输出像一本只属于你的小型命理刊物。",
+    heroNote: "Cloudflare Pages + OpenRouter",
+    heroTagA: "双语切换",
+    heroTagB: "AI 报告",
+    heroTagC: "分享海报",
+    lang: "语言",
+    panelTitle: "建档区",
+    panelBody: "填得越像真实人生，结果越像一份有判断力的解读。",
+    identityTitle: "身份轮廓",
+    contextTitle: "情境设定",
+    questionTitle: "提问核心",
+    name: "称呼",
     birth: "出生日期与时间",
-    wish: "目前的心愿 / 烦恼",
-    focus: "想聚焦的主题",
-    flow: "流派选择",
-    generate: "生成 AI 解读",
-    generating: "生成中...",
-    share: "生成分享卡",
-    saving: "已保存",
-    save: "保存本次运势",
-    result: "AI 解读",
-    summary: "摘要",
-    highlights: "重点",
-    lucky: "幸运信号",
-    roadmap: "行动路径",
+    birthPlace: "出生地",
+    gender: "性别",
+    status: "目前状态",
+    certainty: "时辰可信度",
+    focus: "主题焦点",
+    flow: "解读流派",
+    wish: "目前最想问的事",
+    signalTitle: "命理信号板",
+    signalBody: "把抽象占测结果转成一眼能看懂的节奏与张力。",
+    reportTitle: "本次命理报告",
+    reportLead: "以 AI 整理成可读、可截图、可回看的私人解读。",
+    generate: "生成 AI 命盘",
+    generating: "命盘整理中...",
+    share: "下载分享海报",
+    sharing: "海报导出中...",
+    save: "保存本次结果",
+    saved: "已保存",
+    summary: "总览判读",
+    highlights: "三个关键提醒",
+    sectionsTitle: "重点分区",
+    lucky: "开运提示",
+    roadmap: "时间节奏",
+    radarTitle: "能量星图",
+    radarBody: "不是传统硬命盘，而是为一般人设计的可理解图表。",
+    archiveTitle: "最近保存",
+    archiveEmpty: "还没有保存记录，先做出第一份报告。",
+    compareTitle: "不同流派怎么看你",
+    compareBody: "不是谁更准，而是每一派关注的重点不同。",
+    footerTitle: "使用提醒",
+    footerBody: "娱乐用途，不构成投资、医疗、法律等专业建议。",
+    aiError: "AI 目前没有成功返回结果，请检查 Cloudflare 环境变量或稍后重试。",
     today: "今天",
     week: "本周",
     month: "本月",
     season: "本季",
-    saved: "保存记录",
-    emptySaved: "尚未保存任何记录。",
-    disclaimer: "本站内容仅供娱乐用途，不构成专业建议。",
-    langLabel: "语言",
-    compareTitle: "流派对比",
-    compareDesc: "同一主题，不同流派语气差异。",
+    scoreA: "行动感",
+    scoreB: "稳定度",
+    scoreC: "机会窗",
+    scoreD: "情绪面",
+    scoreE: "关系流",
+    scoreF: "财务感",
+    summaryHintA: "资料完整度",
+    summaryHintB: "流派倾向",
+    summaryHintC: "主题浓度",
+    posterMark: "PRIVATE DOSSIER",
   },
 } as const;
 
@@ -102,49 +178,55 @@ const flows: Flow[] = [
     id: "cyber",
     name: { "zh-TW": "賽博算命", "zh-CN": "赛博算命" },
     desc: {
-      "zh-TW": "八字 + 流年，偏理性解讀",
-      "zh-CN": "八字 + 流年，偏理性解读",
+      "zh-TW": "像產品策略師在幫你看命盤",
+      "zh-CN": "像产品策略师在帮你看命盘",
     },
+    tag: { "zh-TW": "結構派", "zh-CN": "结构派" },
   },
   {
     id: "love",
-    name: { "zh-TW": "月老 · 姻緣", "zh-CN": "月老 · 姻缘" },
+    name: { "zh-TW": "月老姻緣", "zh-CN": "月老姻缘" },
     desc: {
-      "zh-TW": "聚焦關係與情感節奏",
-      "zh-CN": "聚焦关系与情感节奏",
+      "zh-TW": "更重視情感流向與關係對話",
+      "zh-CN": "更重视情感流向与关系对话",
     },
+    tag: { "zh-TW": "情感派", "zh-CN": "情感派" },
   },
   {
     id: "qimen",
-    name: { "zh-TW": "奇門 · 紫微", "zh-CN": "奇门 · 紫微" },
+    name: { "zh-TW": "奇門紫微", "zh-CN": "奇门紫微" },
     desc: {
-      "zh-TW": "偏局勢與時機判斷",
-      "zh-CN": "偏局势与时机判断",
+      "zh-TW": "看時機、看局勢、看關鍵轉折",
+      "zh-CN": "看时机、看局势、看关键转折",
     },
+    tag: { "zh-TW": "佈局派", "zh-CN": "布局派" },
   },
   {
     id: "master",
     name: { "zh-TW": "大師兜底", "zh-CN": "大师兜底" },
     desc: {
-      "zh-TW": "通用解讀，語氣穩定",
-      "zh-CN": "通用解读，语气稳定",
+      "zh-TW": "穩健通用，適合第一次占測",
+      "zh-CN": "稳健通用，适合第一次占测",
     },
+    tag: { "zh-TW": "穩健派", "zh-CN": "稳健派" },
   },
   {
     id: "mentor",
     name: { "zh-TW": "X 導師", "zh-CN": "X 导师" },
     desc: {
-      "zh-TW": "實戰導師口吻",
-      "zh-CN": "实战导师口吻",
+      "zh-TW": "口吻更直接，偏行動與推進",
+      "zh-CN": "口吻更直接，偏行动与推进",
     },
+    tag: { "zh-TW": "推進派", "zh-CN": "推进派" },
   },
   {
     id: "waza",
     name: { "zh-TW": "輕量 waza", "zh-CN": "轻量 waza" },
     desc: {
-      "zh-TW": "可拼裝擴展",
-      "zh-CN": "可拼装扩展",
+      "zh-TW": "自由、輕巧、帶一點靈感實驗",
+      "zh-CN": "自由、轻巧、带一点灵感实验",
     },
+    tag: { "zh-TW": "自由派", "zh-CN": "自由派" },
   },
 ];
 
@@ -157,87 +239,171 @@ const focuses: Focus[] = [
   { id: "study", label: { "zh-TW": "學習考試", "zh-CN": "学习考试" } },
 ];
 
-const palette = ["霧霾藍", "琥珀金", "暮色紫", "晨曦粉", "竹葉青", "曜石黑"];
+const genders: Choice[] = [
+  { id: "female", label: { "zh-TW": "女", "zh-CN": "女" } },
+  { id: "male", label: { "zh-TW": "男", "zh-CN": "男" } },
+  { id: "other", label: { "zh-TW": "其他", "zh-CN": "其他" } },
+];
+
+const statuses: Choice[] = [
+  { id: "single", label: { "zh-TW": "單身", "zh-CN": "单身" } },
+  { id: "dating", label: { "zh-TW": "曖昧/交往中", "zh-CN": "暧昧/交往中" } },
+  { id: "working", label: { "zh-TW": "在職", "zh-CN": "在职" } },
+  { id: "transition", label: { "zh-TW": "轉換期", "zh-CN": "转换期" } },
+];
+
+const certainties: Choice[] = [
+  { id: "exact", label: { "zh-TW": "精確", "zh-CN": "精确" } },
+  { id: "rough", label: { "zh-TW": "大概知道", "zh-CN": "大概知道" } },
+  { id: "unknown", label: { "zh-TW": "不確定", "zh-CN": "不确定" } },
+];
+
+const storageKey = "goodlife-saved-v5";
+const langKey = "goodlife-lang";
 
 const fallbackSummary = {
-  "zh-TW": "目前能量偏穩，適合先整頓節奏再推進。先做一件可交付的事，會帶來信心回流。",
-  "zh-CN": "目前能量偏稳，适合先整顿节奏再推进。先做一件可交付的事，会带来信心回流。",
+  "zh-TW":
+    "現在的關鍵不是你有沒有機會，而是你能不能把分散的注意力收回來。當主題清楚、節奏變穩，你的運勢會比想像中更容易轉向。",
+  "zh-CN":
+    "现在的关键不是你有没有机会，而是你能不能把分散的注意力收回来。当主题清楚、节奏变稳，你的运势会比想象中更容易转向。",
 };
 
-const fallbackHighlights: Record<Lang, string[]> = {
+const fallbackHighlights = {
   "zh-TW": [
-    "聚焦一件可交付的小事，信心會回流。",
-    "把精力集中在 1-2 個真正重要的人。",
-    "本週適合整理節奏，不宜衝動擴張。",
+    "先把一件最卡的事情處理掉，整體能量會重新流動。",
+    "本週適合主動溝通，不適合過度猜測。",
+    "你的好運不是突然降臨，而是從排序清楚開始。",
   ],
   "zh-CN": [
-    "聚焦一件可交付的小事，信心会回流。",
-    "把精力集中在 1-2 个真正重要的人。",
-    "本周适合整理节奏，不宜冲动扩张。",
+    "先把一件最卡的事情处理掉，整体能量会重新流动。",
+    "本周适合主动沟通，不适合过度猜测。",
+    "你的好运不是突然降临，而是从排序清楚开始。",
+  ],
+};
+
+const fallbackSections = {
+  "zh-TW": [
+    {
+      title: "感情",
+      body: "關係裡最重要的不是氣氛，而是你有沒有把需求說清楚。現在更適合真誠表態，而不是維持模糊。",
+    },
+    {
+      title: "事業",
+      body: "工作面有機會出現新的推進口，但前提是先把核心任務做得穩。穩定交付比到處開新局更有用。",
+    },
+    {
+      title: "財運",
+      body: "財務上偏向整理期，適合盤點現金流和支出結構。把錢留給真正重要的方向，運勢才會更順。",
+    },
+  ],
+  "zh-CN": [
+    {
+      title: "感情",
+      body: "关系里最重要的不是气氛，而是你有没有把需求说清楚。现在更适合真诚表态，而不是维持模糊。",
+    },
+    {
+      title: "事业",
+      body: "工作面有机会出现新的推进口，但前提是先把核心任务做稳。稳定交付比到处开新局更有用。",
+    },
+    {
+      title: "财运",
+      body: "财务上偏向整理期，适合盘点现金流和支出结构。把钱留给真正重要的方向，运势才会更顺。",
+    },
   ],
 };
 
 const fallbackLucky = {
-  "zh-TW": { day: "週四", mantra: "慢一點，換來更清楚的判斷。" },
-  "zh-CN": { day: "周四", mantra: "慢一点，换来更清楚的判断。" },
+  "zh-TW": { color: "松煙綠", number: 6, day: "週四", mantra: "先穩住，再放大。" },
+  "zh-CN": { color: "松烟绿", number: 6, day: "周四", mantra: "先稳住，再放大。" },
 };
 
 const fallbackRoadmap = {
   "zh-TW": {
-    today: "先處理一個最重要的待辦。",
-    week: "這週適合對外溝通。",
-    month: "建立一個長期習慣。",
-    season: "收斂目標，穩住節奏。",
+    today: "今天優先處理最卡的那一件事，讓整體節奏重新通順。",
+    week: "本週適合調整互動方式，少猜測，多確認。",
+    month: "本月重點在建立更穩的工作與生活結構。",
+    season: "未來一季的核心是收斂資源，讓行動更集中。",
   },
   "zh-CN": {
-    today: "先处理一个最重要的待办。",
-    week: "这周适合对外沟通。",
-    month: "建立一个长期习惯。",
-    season: "收敛目标，稳住节奏。",
+    today: "今天优先处理最卡的那一件事，让整体节奏重新通顺。",
+    week: "本周适合调整互动方式，少猜测，多确认。",
+    month: "本月重点在建立更稳的工作与生活结构。",
+    season: "未来一季的核心是收敛资源，让行动更集中。",
   },
 };
 
-const storageKey = "goodlife-saved-v2";
-const langKey = "goodlife-lang";
-
 const defaultBirth = (() => {
-  const d = new Date();
-  d.setFullYear(d.getFullYear() - 26);
-  d.setHours(8, 0, 0, 0);
-  return d.toISOString().slice(0, 16);
+  const date = new Date();
+  date.setFullYear(date.getFullYear() - 26);
+  date.setHours(8, 0, 0, 0);
+  return date.toISOString().slice(0, 16);
 })();
 
 const formatDate = (value: string) => {
-  const d = new Date(value);
-  return `${d.getFullYear()}/${d.getMonth() + 1}/${d.getDate()} ${String(
-    d.getHours()
-  ).padStart(2, "0")}:${String(d.getMinutes()).padStart(2, "0")}`;
+  const date = new Date(value);
+  return `${date.getFullYear()}/${date.getMonth() + 1}/${date.getDate()} ${String(
+    date.getHours()
+  ).padStart(2, "0")}:${String(date.getMinutes()).padStart(2, "0")}`;
 };
+
+const scoreFromText = (text: string, offset: number) =>
+  58 + ((text.length * 9 + offset * 17) % 34);
+
+const buildRadarPoints = (values: number[]) => {
+  const center = 120;
+  const radius = 84;
+  return values
+    .map((value, index) => {
+      const angle = (Math.PI * 2 * index) / values.length - Math.PI / 2;
+      const pointRadius = (radius * value) / 100;
+      const x = center + Math.cos(angle) * pointRadius;
+      const y = center + Math.sin(angle) * pointRadius;
+      return `${x},${y}`;
+    })
+    .join(" ");
+};
+
+function SectionCard({
+  title,
+  children,
+}: {
+  title: string;
+  children: React.ReactNode;
+}) {
+  return (
+    <section className="panel-card rounded-[28px] p-5 md:p-6">
+      <p className="panel-label">{title}</p>
+      <div className="mt-4">{children}</div>
+    </section>
+  );
+}
 
 function App() {
   const [lang, setLang] = useState<Lang>("zh-TW");
-  const t = i18n[lang];
-
+  const t = copy[lang];
   const [form, setForm] = useState({
     name: "旅人",
     birth: defaultBirth,
+    birthPlace: "台北",
+    gender: genders[0].id,
+    status: statuses[2].id,
+    certainty: certainties[0].id,
     focus: focuses[0].id,
     path: flows[0].id,
-    wish: "希望今年能有突破感",
+    wish: lang === "zh-CN" ? "希望今年能出现明确突破" : "希望今年能出現明確突破",
   });
-
-  const [saving, setSaving] = useState(false);
-  const [sharing, setSharing] = useState(false);
   const [loadingAI, setLoadingAI] = useState(false);
+  const [sharing, setSharing] = useState(false);
+  const [saving, setSaving] = useState(false);
   const [aiResult, setAiResult] = useState<AIResult | null>(null);
   const [aiError, setAiError] = useState<string | null>(null);
   const [saved, setSaved] = useState<SavedReading[]>([]);
   const shareRef = useRef<HTMLDivElement>(null);
 
   useEffect(() => {
-    const stored = localStorage.getItem(storageKey);
-    if (stored) {
-      setSaved(JSON.parse(stored));
+    const storedSaved = localStorage.getItem(storageKey);
+    if (storedSaved) {
+      setSaved(JSON.parse(storedSaved));
     }
     const storedLang = localStorage.getItem(langKey) as Lang | null;
     if (storedLang) {
@@ -253,36 +419,101 @@ function App() {
     localStorage.setItem(langKey, lang);
   }, [lang]);
 
-  const flow = useMemo(() => flows.find((f) => f.id === form.path) ?? flows[0], [form.path]);
-  const focus = useMemo(
-    () => focuses.find((f) => f.id === form.focus) ?? focuses[0],
-    [form.focus]
+  const flow = useMemo(() => flows.find((item) => item.id === form.path) ?? flows[0], [form.path]);
+  const focus = useMemo(() => focuses.find((item) => item.id === form.focus) ?? focuses[0], [form.focus]);
+  const gender = useMemo(
+    () => genders.find((item) => item.id === form.gender) ?? genders[0],
+    [form.gender]
   );
+  const status = useMemo(
+    () => statuses.find((item) => item.id === form.status) ?? statuses[0],
+    [form.status]
+  );
+  const certainty = useMemo(
+    () => certainties.find((item) => item.id === form.certainty) ?? certainties[0],
+    [form.certainty]
+  );
+
+  const report = {
+    headline: aiResult?.headline ?? t.reportTitle,
+    summary: aiResult?.summary ?? fallbackSummary[lang],
+    highlights:
+      aiResult?.highlights && aiResult.highlights.length > 0
+        ? aiResult.highlights
+        : fallbackHighlights[lang],
+    sections:
+      aiResult?.sections && aiResult.sections.length > 0
+        ? aiResult.sections
+        : fallbackSections[lang],
+    lucky: aiResult?.lucky ?? fallbackLucky[lang],
+    roadmap: aiResult?.roadmap ?? fallbackRoadmap[lang],
+  };
+
+  const scorecards = [
+    { label: t.scoreA, value: scoreFromText(form.wish, 1) },
+    { label: t.scoreB, value: scoreFromText(form.status, 2) },
+    { label: t.scoreC, value: scoreFromText(form.focus, 3) },
+    { label: t.scoreD, value: scoreFromText(form.name, 4) },
+    { label: t.scoreE, value: scoreFromText(form.gender, 5) },
+    { label: t.scoreF, value: scoreFromText(form.birthPlace, 6) },
+  ];
+
+  const signalBadges = [
+    `${t.summaryHintA} ${Math.min(99, 70 + form.birthPlace.length)}`,
+    `${t.summaryHintB} ${flow.tag[lang]}`,
+    `${t.summaryHintC} ${focus.label[lang]}`,
+  ];
+
+  const radarPoints = buildRadarPoints(scorecards.map((item) => item.value));
 
   const update = (key: keyof typeof form) => (value: string) =>
     setForm((prev) => ({ ...prev, [key]: value }));
 
-  const onSave = () => {
-    setSaving(true);
-    const item: SavedReading = {
-      id: `${Date.now()}`,
-      name: form.name,
-      focus: focus.label[lang],
-      path: flow.name[lang],
-      headline: aiResult?.headline ?? t.result,
-      date: new Date().toISOString(),
-    };
-    setSaved((prev) => [item, ...prev].slice(0, 8));
-    setTimeout(() => setSaving(false), 600);
+  const onGenerate = async () => {
+    setLoadingAI(true);
+    setAiError(null);
+    try {
+      const response = await fetch("/api/fortune", {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({
+          name: form.name,
+          birth: form.birth,
+          birthPlace: form.birthPlace,
+          gender: gender.label[lang],
+          status: status.label[lang],
+          timeCertainty: certainty.label[lang],
+          focus: focus.label[lang],
+          path: flow.name[lang],
+          wish: form.wish,
+          lang,
+        }),
+      });
+      const json = await response.json();
+      if (!json.ok) {
+        setAiError(json.error ?? t.aiError);
+        setAiResult(null);
+        return;
+      }
+      setAiResult(json.data as AIResult);
+    } catch (error) {
+      setAiError(error instanceof Error ? error.message : t.aiError);
+      setAiResult(null);
+    } finally {
+      setLoadingAI(false);
+    }
   };
 
   const onShare = async () => {
     if (!shareRef.current) return;
     setSharing(true);
     try {
-      const dataUrl = await toPng(shareRef.current, { pixelRatio: 2 });
+      const dataUrl = await toPng(shareRef.current, {
+        pixelRatio: 2,
+        backgroundColor: "#f3ecdf",
+      });
       const link = document.createElement("a");
-      link.download = `goodlife-${Date.now()}.png`;
+      link.download = `goodlife-poster-${Date.now()}.png`;
       link.href = dataUrl;
       link.click();
     } finally {
@@ -290,279 +521,500 @@ function App() {
     }
   };
 
-  const onGenerate = async () => {
-    setLoadingAI(true);
-    setAiError(null);
-    try {
-      const res = await fetch("/api/fortune", {
-        method: "POST",
-        headers: { "Content-Type": "application/json" },
-        body: JSON.stringify({
-          name: form.name,
-          birth: form.birth,
-          focus: focus.label[lang],
-          path: flow.name[lang],
-          wish: form.wish,
-          lang,
-        }),
-      });
-      const json = await res.json();
-      if (!json.ok) {
-        setAiError(json.error ?? "API error");
-        setAiResult(null);
-        return;
-      }
-      const data = json.data as AIResult;
-      setAiResult(data);
-    } catch (error) {
-      setAiError(error instanceof Error ? error.message : "Unknown error");
-      setAiResult(null);
-    } finally {
-      setLoadingAI(false);
-    }
+  const onSave = () => {
+    setSaving(true);
+    setSaved((prev) => [
+      {
+        id: `${Date.now()}`,
+        name: form.name,
+        focus: focus.label[lang],
+        path: flow.name[lang],
+        headline: report.headline,
+        date: new Date().toISOString(),
+      },
+      ...prev,
+    ].slice(0, 8));
+    setTimeout(() => setSaving(false), 650);
   };
 
   return (
-    <div className="min-h-screen bg-sand text-slate-900">
-      <div className="mx-auto max-w-6xl px-6 pb-16 pt-12">
-        <header className="flex flex-col gap-6 border-b border-slate-200 pb-8 md:flex-row md:items-end md:justify-between">
-          <div>
-            <p className="text-xs font-semibold uppercase tracking-[0.3em] text-slate-400">GoodLife Studio</p>
-            <h1 className="mt-3 text-4xl font-semibold md:text-5xl">{t.title}</h1>
-            <p className="mt-3 max-w-2xl text-base text-slate-600">{t.subtitle}</p>
-          </div>
-          <div className="flex items-center gap-3">
-            <span className="text-xs font-semibold text-slate-400">{t.langLabel}</span>
-            <div className="flex rounded-full border border-slate-200 bg-white p-1 text-xs">
-              <button
-                onClick={() => setLang("zh-TW")}
-                className={`rounded-full px-3 py-1 ${lang === "zh-TW" ? "bg-slate-900 text-white" : "text-slate-500"}`}
-              >
-                繁體
-              </button>
-              <button
-                onClick={() => setLang("zh-CN")}
-                className={`rounded-full px-3 py-1 ${lang === "zh-CN" ? "bg-slate-900 text-white" : "text-slate-500"}`}
-              >
-                简体
-              </button>
+    <div className="min-h-screen bg-stage text-slate-900">
+      <div className="orb orb-one" />
+      <div className="orb orb-two" />
+      <div className="mx-auto max-w-[1500px] px-4 pb-16 pt-5 md:px-8">
+        <header className="hero-shell rounded-[38px] px-5 py-6 md:px-8 md:py-8">
+          <div className="grid gap-6 xl:grid-cols-[1.25fr_0.75fr]">
+            <div className="space-y-6">
+              <div className="flex flex-wrap items-center gap-3">
+                <span className="pill-light">{t.eyebrow}</span>
+                <span className="pill-dark">{t.heroNote}</span>
+              </div>
+              <div className="space-y-4">
+                <h1 className="hero-title whitespace-pre-line">{t.heroTitle}</h1>
+                <p className="max-w-3xl text-base leading-8 text-stone-600 md:text-lg">
+                  {t.heroBody}
+                </p>
+              </div>
+              <div className="flex flex-wrap gap-3">
+                <span className="hero-chip">{t.heroTagA}</span>
+                <span className="hero-chip">{t.heroTagB}</span>
+                <span className="hero-chip">{t.heroTagC}</span>
+              </div>
+            </div>
+
+            <div className="grid gap-4 md:grid-cols-2 xl:grid-cols-1">
+              <div className="rounded-[30px] bg-[#14281d] p-5 text-white shadow-[0_20px_50px_rgba(20,40,29,0.28)]">
+                <div className="flex items-center justify-between">
+                  <p className="text-[11px] uppercase tracking-[0.28em] text-white/55">
+                    {t.lang}
+                  </p>
+                  <div className="flex rounded-full bg-white/10 p-1 text-xs">
+                    <button
+                      onClick={() => setLang("zh-TW")}
+                      className={`rounded-full px-3 py-1 ${
+                        lang === "zh-TW" ? "bg-white text-[#14281d]" : "text-white/70"
+                      }`}
+                    >
+                      繁體
+                    </button>
+                    <button
+                      onClick={() => setLang("zh-CN")}
+                      className={`rounded-full px-3 py-1 ${
+                        lang === "zh-CN" ? "bg-white text-[#14281d]" : "text-white/70"
+                      }`}
+                    >
+                      简体
+                    </button>
+                  </div>
+                </div>
+                <div className="mt-5 grid grid-cols-3 gap-3">
+                  {scorecards.slice(0, 3).map((item) => (
+                    <div key={item.label} className="rounded-2xl bg-white/10 px-3 py-4">
+                      <p className="text-[11px] uppercase tracking-[0.2em] text-white/55">
+                        {item.label}
+                      </p>
+                      <p className="mt-2 text-2xl font-semibold">{item.value}</p>
+                    </div>
+                  ))}
+                </div>
+              </div>
+              <div className="rounded-[30px] bg-white/80 p-5 shadow-[0_14px_40px_rgba(58,45,25,0.08)] ring-1 ring-stone-200">
+                <p className="text-[11px] uppercase tracking-[0.28em] text-stone-400">
+                  {t.signalTitle}
+                </p>
+                <p className="mt-3 text-sm leading-7 text-stone-600">{t.signalBody}</p>
+                <div className="mt-5 space-y-2">
+                  {signalBadges.map((item) => (
+                    <div key={item} className="rounded-2xl bg-stone-100 px-4 py-3 text-sm text-stone-700">
+                      {item}
+                    </div>
+                  ))}
+                </div>
+              </div>
             </div>
           </div>
         </header>
 
-        <main className="mt-10 grid gap-8 lg:grid-cols-[1.1fr_1fr]">
-          <section className="space-y-6">
-            <div className="rounded-3xl border border-slate-200 bg-white p-6 shadow-sm">
-              <div className="flex items-center justify-between">
-                <h2 className="text-lg font-semibold">{t.input}</h2>
-                <span className="rounded-full bg-slate-100 px-3 py-1 text-xs text-slate-500">{t.ritual}</span>
-              </div>
+        <main className="mt-8 grid gap-8 xl:grid-cols-[420px_minmax(0,1fr)]">
+          <aside className="space-y-5 xl:sticky xl:top-6 xl:self-start">
+            <SectionCard title={t.panelTitle}>
+              <p className="text-sm leading-7 text-stone-600">{t.panelBody}</p>
+            </SectionCard>
 
-              <div className="mt-5 grid gap-4 md:grid-cols-2">
-                <div className="space-y-2">
-                  <label className="text-sm font-medium text-slate-600">{t.name}</label>
+            <SectionCard title={t.identityTitle}>
+              <div className="grid gap-4">
+                <label className="field-block">
+                  <span className="field-label">{t.name}</span>
                   <input
-                    className="w-full rounded-2xl border border-slate-200 bg-white px-3 py-2 text-slate-800 focus:border-slate-400 focus:outline-none"
+                    className="field-input"
                     value={form.name}
                     onChange={(e) => update("name")(e.target.value)}
                   />
-                </div>
-                <div className="space-y-2">
-                  <label className="text-sm font-medium text-slate-600">{t.birth}</label>
+                </label>
+                <label className="field-block">
+                  <span className="field-label">{t.birth}</span>
                   <input
                     type="datetime-local"
-                    className="w-full rounded-2xl border border-slate-200 bg-white px-3 py-2 text-slate-800 focus:border-slate-400 focus:outline-none"
+                    className="field-input"
                     value={form.birth}
                     onChange={(e) => update("birth")(e.target.value)}
                   />
-                </div>
-                <div className="space-y-2 md:col-span-2">
-                  <label className="text-sm font-medium text-slate-600">{t.wish}</label>
+                </label>
+                <label className="field-block">
+                  <span className="field-label">{t.birthPlace}</span>
                   <input
-                    className="w-full rounded-2xl border border-slate-200 bg-white px-3 py-2 text-slate-800 focus:border-slate-400 focus:outline-none"
-                    value={form.wish}
-                    onChange={(e) => update("wish")(e.target.value)}
+                    className="field-input"
+                    value={form.birthPlace}
+                    onChange={(e) => update("birthPlace")(e.target.value)}
                   />
+                </label>
+                <div className="grid gap-4 md:grid-cols-2 xl:grid-cols-1">
+                  <label className="field-block">
+                    <span className="field-label">{t.gender}</span>
+                    <select
+                      className="field-input"
+                      value={form.gender}
+                      onChange={(e) => update("gender")(e.target.value)}
+                    >
+                      {genders.map((item) => (
+                        <option key={item.id} value={item.id}>
+                          {item.label[lang]}
+                        </option>
+                      ))}
+                    </select>
+                  </label>
+                  <label className="field-block">
+                    <span className="field-label">{t.certainty}</span>
+                    <select
+                      className="field-input"
+                      value={form.certainty}
+                      onChange={(e) => update("certainty")(e.target.value)}
+                    >
+                      {certainties.map((item) => (
+                        <option key={item.id} value={item.id}>
+                          {item.label[lang]}
+                        </option>
+                      ))}
+                    </select>
+                  </label>
                 </div>
               </div>
-            </div>
+            </SectionCard>
 
-            <div className="rounded-3xl border border-slate-200 bg-white p-6 shadow-sm">
-              <h3 className="text-sm font-semibold text-slate-600">{t.focus}</h3>
-              <div className="mt-3 grid grid-cols-2 gap-2 md:grid-cols-3">
-                {focuses.map((item) => (
-                  <button
-                    key={item.id}
-                    onClick={() => update("focus")(item.id)}
-                    className={`rounded-full px-3 py-2 text-sm transition ${
-                      form.focus === item.id
-                        ? "bg-slate-900 text-white"
-                        : "bg-slate-100 text-slate-600 hover:bg-slate-200"
-                    }`}
+            <SectionCard title={t.contextTitle}>
+              <div className="grid gap-4">
+                <label className="field-block">
+                  <span className="field-label">{t.status}</span>
+                  <select
+                    className="field-input"
+                    value={form.status}
+                    onChange={(e) => update("status")(e.target.value)}
                   >
-                    {item.label[lang]}
-                  </button>
-                ))}
-              </div>
-            </div>
+                    {statuses.map((item) => (
+                      <option key={item.id} value={item.id}>
+                        {item.label[lang]}
+                      </option>
+                    ))}
+                  </select>
+                </label>
 
-            <div className="rounded-3xl border border-slate-200 bg-white p-6 shadow-sm">
-              <h3 className="text-sm font-semibold text-slate-600">{t.flow}</h3>
-              <div className="mt-4 grid gap-3 md:grid-cols-2">
-                {flows.map((item) => (
-                  <button
-                    key={item.id}
-                    onClick={() => update("path")(item.id)}
-                    className={`rounded-3xl border px-4 py-3 text-left transition ${
-                      form.path === item.id
-                        ? "border-slate-900 bg-slate-50"
-                        : "border-slate-200 bg-white hover:border-slate-400"
-                    }`}
-                  >
-                    <p className="text-sm font-semibold text-slate-800">{item.name[lang]}</p>
-                    <p className="text-xs text-slate-500">{item.desc[lang]}</p>
-                  </button>
-                ))}
+                <div>
+                  <span className="field-label">{t.focus}</span>
+                  <div className="mt-3 grid grid-cols-2 gap-3">
+                    {focuses.map((item) => (
+                      <button
+                        key={item.id}
+                        onClick={() => update("focus")(item.id)}
+                        className={`choice-card ${
+                          form.focus === item.id ? "choice-card-active" : ""
+                        }`}
+                      >
+                        {item.label[lang]}
+                      </button>
+                    ))}
+                  </div>
+                </div>
+
+                <div>
+                  <span className="field-label">{t.flow}</span>
+                  <div className="mt-3 grid gap-3">
+                    {flows.map((item) => (
+                      <button
+                        key={item.id}
+                        onClick={() => update("path")(item.id)}
+                        className={`flow-card ${form.path === item.id ? "flow-card-active" : ""}`}
+                      >
+                        <div>
+                          <p className="text-sm font-semibold">{item.name[lang]}</p>
+                          <p className="mt-1 text-xs opacity-75">{item.desc[lang]}</p>
+                        </div>
+                        <span className="flow-tag">{item.tag[lang]}</span>
+                      </button>
+                    ))}
+                  </div>
+                </div>
               </div>
-            </div>
-          </section>
+            </SectionCard>
+
+            <SectionCard title={t.questionTitle}>
+              <label className="field-block">
+                <span className="field-label">{t.wish}</span>
+                <textarea
+                  className="field-input min-h-32 resize-none"
+                  value={form.wish}
+                  onChange={(e) => update("wish")(e.target.value)}
+                />
+              </label>
+              <div className="mt-4 grid gap-3 md:grid-cols-3 xl:grid-cols-1">
+                <button
+                  onClick={onGenerate}
+                  disabled={loadingAI}
+                  className="action-primary"
+                >
+                  {loadingAI ? t.generating : t.generate}
+                </button>
+                <button
+                  onClick={onShare}
+                  disabled={sharing}
+                  className="action-secondary"
+                >
+                  {sharing ? t.sharing : t.share}
+                </button>
+                <button onClick={onSave} className="action-secondary">
+                  {saving ? t.saved : t.save}
+                </button>
+              </div>
+            </SectionCard>
+          </aside>
 
           <section className="space-y-6">
-            <div ref={shareRef} className="rounded-3xl border border-slate-200 bg-white p-6 shadow-sm">
-              <div className="flex items-start justify-between gap-4">
-                <div>
-                  <p className="text-xs uppercase tracking-[0.3em] text-slate-400">{t.result}</p>
-                  <h3 className="mt-2 text-2xl font-semibold text-slate-900">
-                    {aiResult?.headline ?? t.result}
-                  </h3>
-                  <p className="mt-2 text-sm text-slate-500">
-                    {form.name} · {formatDate(form.birth)} · {focus.label[lang]}
-                  </p>
-                </div>
-                <div className="rounded-2xl bg-slate-900 px-3 py-2 text-xs text-white">
-                  {flow.name[lang]}
-                </div>
-              </div>
-
-              {aiError && (
-                <div className="mt-4 rounded-2xl border border-rose-200 bg-rose-50 px-3 py-2 text-sm text-rose-700">
-                  {aiError}
-                </div>
-              )}
-
-              <div className="mt-4 space-y-4 text-sm text-slate-700">
-                <div>
-                  <p className="text-xs font-semibold text-slate-400">{t.summary}</p>
-                  <p className="mt-2">{aiResult?.summary ?? fallbackSummary[lang]}</p>
-                </div>
-                <div>
-                  <p className="text-xs font-semibold text-slate-400">{t.highlights}</p>
-                  <ul className="mt-2 space-y-1">
-                    {(aiResult?.highlights ?? []).length > 0
-                      ? aiResult?.highlights.map((item, idx) => (
-                          <li key={idx} className="rounded-xl bg-slate-50 px-3 py-2">
-                            {item}
-                          </li>
-                        ))
-                      : fallbackHighlights[lang].map((item, idx) => (
-                          <li key={idx} className="rounded-xl bg-slate-50 px-3 py-2">
-                            {item}
-                          </li>
-                        ))}
-                  </ul>
-                </div>
-                <div className="grid gap-3 md:grid-cols-2">
-                  <div className="rounded-2xl border border-slate-200 bg-white px-3 py-2">
-                    <p className="text-xs font-semibold text-slate-400">{t.lucky}</p>
-                    <p className="mt-2 text-sm">
-                      {aiResult?.lucky?.color ?? palette[0]} · {aiResult?.lucky?.number ?? 6}
+            <div
+              ref={shareRef}
+              className="report-shell overflow-hidden rounded-[40px] border border-[#ddd2c0] bg-[#f3ecdf]"
+            >
+              <div className="report-top px-6 py-6 md:px-8 md:py-8">
+                <div className="flex flex-wrap items-start justify-between gap-5">
+                  <div className="max-w-3xl">
+                    <p className="text-[11px] uppercase tracking-[0.32em] text-[#8e7b62]">
+                      {t.posterMark}
                     </p>
-                    <p className="text-xs text-slate-500">{aiResult?.lucky?.day ?? fallbackLucky[lang].day}</p>
-                    <p className="mt-2 text-xs text-slate-500">{aiResult?.lucky?.mantra ?? fallbackLucky[lang].mantra}</p>
+                    <h2 className="mt-3 text-3xl font-semibold leading-tight text-[#241d14] md:text-5xl">
+                      {report.headline}
+                    </h2>
+                    <p className="mt-4 text-sm leading-7 text-[#6b5c4b] md:text-base">
+                      {t.reportLead}
+                    </p>
                   </div>
-                  <div className="rounded-2xl border border-slate-200 bg-white px-3 py-2">
-                    <p className="text-xs font-semibold text-slate-400">{t.roadmap}</p>
-                    <div className="mt-2 space-y-2 text-xs text-slate-600">
-                      <p>{t.today}：{aiResult?.roadmap?.today ?? fallbackRoadmap[lang].today}</p>
-                      <p>{t.week}：{aiResult?.roadmap?.week ?? fallbackRoadmap[lang].week}</p>
-                      <p>{t.month}：{aiResult?.roadmap?.month ?? fallbackRoadmap[lang].month}</p>
-                      <p>{t.season}：{aiResult?.roadmap?.season ?? fallbackRoadmap[lang].season}</p>
+                  <div className="rounded-[28px] bg-[#14281d] px-5 py-4 text-white shadow-[0_16px_40px_rgba(20,40,29,0.25)]">
+                    <p className="text-[11px] uppercase tracking-[0.24em] text-white/55">
+                      {t.signalTitle}
+                    </p>
+                    <p className="mt-2 text-3xl font-semibold">{scorecards[0].value}</p>
+                    <p className="mt-1 text-xs text-white/65">{focus.label[lang]}</p>
+                  </div>
+                </div>
+
+                <div className="mt-6 grid gap-3 md:grid-cols-3">
+                  <div className="rounded-[24px] bg-white/72 px-4 py-4 backdrop-blur">
+                    <p className="text-[11px] uppercase tracking-[0.24em] text-[#9b8d79]">
+                      {t.identityTitle}
+                    </p>
+                    <p className="mt-2 text-sm text-[#42372c]">
+                      {form.name} · {gender.label[lang]}
+                    </p>
+                    <p className="mt-1 text-sm text-[#6f6252]">{formatDate(form.birth)}</p>
+                  </div>
+                  <div className="rounded-[24px] bg-white/72 px-4 py-4 backdrop-blur">
+                    <p className="text-[11px] uppercase tracking-[0.24em] text-[#9b8d79]">
+                      {t.contextTitle}
+                    </p>
+                    <p className="mt-2 text-sm text-[#42372c]">{form.birthPlace}</p>
+                    <p className="mt-1 text-sm text-[#6f6252]">
+                      {status.label[lang]} · {certainty.label[lang]}
+                    </p>
+                  </div>
+                  <div className="rounded-[24px] bg-white/72 px-4 py-4 backdrop-blur">
+                    <p className="text-[11px] uppercase tracking-[0.24em] text-[#9b8d79]">
+                      {t.flow}
+                    </p>
+                    <p className="mt-2 text-sm text-[#42372c]">{flow.name[lang]}</p>
+                    <p className="mt-1 text-sm text-[#6f6252]">{flow.desc[lang]}</p>
+                  </div>
+                </div>
+              </div>
+
+              <div className="grid gap-6 px-6 pb-6 md:px-8 md:pb-8 xl:grid-cols-[1.08fr_0.92fr]">
+                <div className="space-y-6">
+                  {aiError ? (
+                    <div className="rounded-[28px] border border-[#e2beb4] bg-[#fff3ef] px-5 py-4 text-sm text-[#9f4f41]">
+                      {aiError || t.aiError}
+                    </div>
+                  ) : null}
+
+                  <div className="report-card">
+                    <p className="report-label">{t.summary}</p>
+                    <p className="mt-4 text-[15px] leading-8 text-[#45382b]">{report.summary}</p>
+                  </div>
+
+                  <div className="report-card">
+                    <p className="report-label">{t.highlights}</p>
+                    <div className="mt-4 grid gap-3">
+                      {report.highlights.map((item, index) => (
+                        <div key={`${item}-${index}`} className="highlight-card">
+                          <span className="highlight-index">0{index + 1}</span>
+                          <p className="mt-2 text-sm leading-7 text-[#45382b]">{item}</p>
+                        </div>
+                      ))}
+                    </div>
+                  </div>
+
+                  <div className="report-card">
+                    <p className="report-label">{t.sectionsTitle}</p>
+                    <div className="mt-4 grid gap-4 md:grid-cols-3">
+                      {report.sections.map((section, index) => (
+                        <article key={`${section.title}-${index}`} className="section-card">
+                          <p className="section-title">{section.title}</p>
+                          <p className="mt-3 text-sm leading-7 text-[#4d4033]">{section.body}</p>
+                        </article>
+                      ))}
+                    </div>
+                  </div>
+                </div>
+
+                <div className="space-y-6">
+                  <div className="report-card h-full">
+                    <div className="flex items-start justify-between gap-4">
+                      <div>
+                        <p className="report-label">{t.radarTitle}</p>
+                        <p className="mt-2 text-sm leading-7 text-[#6d5e4d]">{t.radarBody}</p>
+                      </div>
+                    </div>
+                    <div className="mt-6 grid gap-6 lg:grid-cols-[260px_1fr] xl:grid-cols-1">
+                      <div className="mx-auto">
+                        <svg viewBox="0 0 240 240" className="h-[240px] w-[240px]">
+                          <circle cx="120" cy="120" r="90" fill="none" stroke="#ddd3c4" />
+                          <circle cx="120" cy="120" r="66" fill="none" stroke="#e8dfd2" />
+                          <circle cx="120" cy="120" r="42" fill="none" stroke="#f0e8dc" />
+                          <polygon
+                            points={radarPoints}
+                            fill="rgba(20,40,29,0.16)"
+                            stroke="#14281d"
+                            strokeWidth="2"
+                          />
+                          {scorecards.map((item, index) => {
+                            const angle = (Math.PI * 2 * index) / scorecards.length - Math.PI / 2;
+                            const x = 120 + Math.cos(angle) * 108;
+                            const y = 120 + Math.sin(angle) * 108;
+                            return (
+                              <text
+                                key={item.label}
+                                x={x}
+                                y={y}
+                                textAnchor="middle"
+                                dominantBaseline="middle"
+                                fill="#74624f"
+                                fontSize="10"
+                              >
+                                {item.label}
+                              </text>
+                            );
+                          })}
+                        </svg>
+                      </div>
+                      <div className="grid gap-3">
+                        {scorecards.map((item) => (
+                          <div key={item.label} className="score-row">
+                            <div className="flex items-center justify-between gap-4">
+                              <span className="text-sm font-medium text-[#4a3f34]">{item.label}</span>
+                              <span className="text-sm font-semibold text-[#14281d]">{item.value}</span>
+                            </div>
+                            <div className="mt-2 h-2 rounded-full bg-[#ece2d4]">
+                              <div
+                                className="h-2 rounded-full bg-[#14281d]"
+                                style={{ width: `${item.value}%` }}
+                              />
+                            </div>
+                          </div>
+                        ))}
+                      </div>
+                    </div>
+                  </div>
+
+                  <div className="grid gap-5 md:grid-cols-2 xl:grid-cols-1">
+                    <div className="report-card report-card-dark">
+                      <p className="report-label report-label-dark">{t.lucky}</p>
+                      <p className="mt-4 text-2xl font-semibold text-white">
+                        {report.lucky.color} · {report.lucky.number}
+                      </p>
+                      <p className="mt-2 text-sm text-white/70">{report.lucky.day}</p>
+                      <p className="mt-4 text-sm leading-7 text-white/82">{report.lucky.mantra}</p>
+                    </div>
+
+                    <div className="report-card">
+                      <p className="report-label">{t.roadmap}</p>
+                      <div className="mt-4 grid gap-3">
+                        {[
+                          [t.today, report.roadmap.today],
+                          [t.week, report.roadmap.week],
+                          [t.month, report.roadmap.month],
+                          [t.season, report.roadmap.season],
+                        ].map(([label, value]) => (
+                          <div key={label} className="timeline-card">
+                            <p className="text-[11px] uppercase tracking-[0.22em] text-[#8e7d69]">
+                              {label}
+                            </p>
+                            <p className="mt-2 text-sm leading-7 text-[#45382b]">{value}</p>
+                          </div>
+                        ))}
+                      </div>
                     </div>
                   </div>
                 </div>
               </div>
             </div>
 
-            <div className="grid gap-3 md:grid-cols-2">
-              <button
-                onClick={onGenerate}
-                className="rounded-2xl bg-slate-900 px-4 py-3 text-sm font-semibold text-white hover:bg-slate-800 disabled:cursor-not-allowed disabled:bg-slate-400"
-                disabled={loadingAI}
-              >
-                {loadingAI ? t.generating : t.generate}
-              </button>
-              <button
-                onClick={onShare}
-                className="rounded-2xl border border-slate-200 bg-white px-4 py-3 text-sm font-semibold text-slate-700 hover:border-slate-400"
-              >
-                {sharing ? t.generating : t.share}
-              </button>
-              <button
-                onClick={onSave}
-                className="rounded-2xl border border-slate-200 bg-white px-4 py-3 text-sm font-semibold text-slate-700 hover:border-slate-400 md:col-span-2"
-              >
-                {saving ? t.saving : t.save}
-              </button>
-            </div>
-
-            <div className="rounded-3xl border border-slate-200 bg-white p-5 shadow-sm">
-              <div className="flex items-center justify-between">
-                <h3 className="text-sm font-semibold text-slate-600">{t.saved}</h3>
-                <span className="text-xs text-slate-400">{saved.length}/8</span>
-              </div>
-              <div className="mt-3 space-y-3">
-                {saved.length === 0 && <p className="text-sm text-slate-500">{t.emptySaved}</p>}
-                {saved.map((item) => (
-                  <div key={item.id} className="rounded-2xl border border-slate-200 px-3 py-2">
-                    <div className="flex items-center justify-between">
-                      <p className="text-sm font-semibold text-slate-700">{item.name} · {item.focus}</p>
-                      <span className="text-xs text-slate-400">{new Date(item.date).toLocaleDateString()}</span>
-                    </div>
-                    <p className="text-xs text-slate-500">{item.path} · {item.headline}</p>
+            <div className="grid gap-6 xl:grid-cols-[1.08fr_0.92fr]">
+              <div className="panel-card rounded-[32px] p-6">
+                <div className="flex items-end justify-between gap-4">
+                  <div>
+                    <p className="panel-label">{t.compareTitle}</p>
+                    <p className="mt-2 text-sm leading-7 text-stone-600">{t.compareBody}</p>
                   </div>
-                ))}
+                  <span className="rounded-full bg-stone-100 px-4 py-2 text-xs uppercase tracking-[0.2em] text-stone-500">
+                    {focus.label[lang]}
+                  </span>
+                </div>
+                <div className="mt-5 grid gap-3 md:grid-cols-3">
+                  {flows.map((item) => (
+                    <article key={item.id} className="rounded-[24px] bg-stone-50 px-4 py-4 ring-1 ring-stone-200">
+                      <p className="text-sm font-semibold text-stone-800">{item.name[lang]}</p>
+                      <p className="mt-2 text-sm leading-6 text-stone-500">{item.desc[lang]}</p>
+                      <span className="mt-4 inline-flex rounded-full bg-white px-3 py-1 text-[11px] uppercase tracking-[0.2em] text-stone-500">
+                        {item.tag[lang]}
+                      </span>
+                    </article>
+                  ))}
+                </div>
+              </div>
+
+              <div className="panel-card rounded-[32px] p-6">
+                <div className="flex items-center justify-between">
+                  <p className="panel-label">{t.archiveTitle}</p>
+                  <span className="text-sm text-stone-400">{saved.length}/8</span>
+                </div>
+                <div className="mt-4 space-y-3">
+                  {saved.length === 0 ? (
+                    <p className="text-sm leading-7 text-stone-500">{t.archiveEmpty}</p>
+                  ) : (
+                    saved.map((item) => (
+                      <div key={item.id} className="rounded-[22px] bg-stone-50 px-4 py-4 ring-1 ring-stone-200">
+                        <div className="flex items-start justify-between gap-4">
+                          <div>
+                            <p className="text-sm font-semibold text-stone-800">
+                              {item.name} · {item.focus}
+                            </p>
+                            <p className="mt-1 text-sm text-stone-500">{item.headline}</p>
+                            <p className="mt-2 text-[11px] uppercase tracking-[0.22em] text-stone-400">
+                              {item.path}
+                            </p>
+                          </div>
+                          <span className="text-xs text-stone-400">
+                            {new Date(item.date).toLocaleDateString()}
+                          </span>
+                        </div>
+                      </div>
+                    ))
+                  )}
+                </div>
               </div>
             </div>
           </section>
         </main>
 
-        <section className="mt-10 grid gap-6 md:grid-cols-2">
-          <div className="rounded-3xl border border-slate-200 bg-white p-6 shadow-sm">
-            <div className="flex items-end justify-between">
-              <div>
-                <h3 className="text-sm font-semibold text-slate-700">{t.compareTitle}</h3>
-                <p className="text-xs text-slate-500">{t.compareDesc}</p>
-              </div>
-              <span className="text-xs text-slate-400">{focus.label[lang]}</span>
-            </div>
-            <div className="mt-4 grid gap-3 md:grid-cols-2">
-              {flows.map((item) => (
-                <div key={item.id} className="rounded-2xl border border-slate-200 bg-slate-50 px-3 py-2">
-                  <p className="text-sm font-semibold text-slate-700">{item.name[lang]}</p>
-                  <p className="text-xs text-slate-500">{item.desc[lang]}</p>
-                </div>
-              ))}
-            </div>
-          </div>
-          <div className="rounded-3xl border border-slate-200 bg-white p-6 shadow-sm">
-            <h3 className="text-sm font-semibold text-slate-700">{t.disclaimer}</h3>
-            <p className="mt-3 text-sm text-slate-500">
-              {lang === "zh-CN"
-                ? "本服务不提供投资/医疗/法律建议，请以自我判断为准。"
-                : "本服務不提供投資/醫療/法律建議，請以自我判斷為準。"}
-            </p>
-          </div>
-        </section>
+        <footer className="mt-8 rounded-[32px] bg-[#14281d] px-6 py-6 text-white shadow-[0_18px_45px_rgba(20,40,29,0.24)]">
+          <p className="text-[11px] uppercase tracking-[0.28em] text-white/55">{t.footerTitle}</p>
+          <p className="mt-3 text-base leading-8 text-white/80">{t.footerBody}</p>
+        </footer>
       </div>
     </div>
   );

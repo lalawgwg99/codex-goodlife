@@ -3,10 +3,19 @@ import OpenAI from "openai";
 type Payload = {
   name: string;
   birth: string;
+  birthPlace: string;
+  gender: string;
+  status: string;
+  timeCertainty: string;
   focus: string;
   path: string;
   wish: string;
   lang: "zh-TW" | "zh-CN";
+};
+
+type FortuneSection = {
+  title: string;
+  body: string;
 };
 
 type Env = {
@@ -19,7 +28,7 @@ type Env = {
 
 const buildPrompt = (payload: Payload) => {
   const language = payload.lang === "zh-CN" ? "简体中文" : "繁體中文";
-  return `請以${language}輸出，風格簡潔、溫和、專業，不要長篇大道理。\n\n使用者資訊：\n- 稱呼：${payload.name}\n- 出生時間：${payload.birth}\n- 主題：${payload.focus}\n- 流派：${payload.path}\n- 心願：${payload.wish}\n\n請輸出 JSON，格式如下：\n{\n  "headline": "短句標題",\n  "summary": "3-4 句摘要",\n  "highlights": ["重點1", "重點2", "重點3"],\n  "lucky": {"color":"色彩","number":1,"day":"週X","mantra":"短句"},\n  "roadmap": {"today":"...","week":"...","month":"...","season":"..."}\n}\n只輸出 JSON，不要加任何多餘文字。`;
+  return `請以${language}輸出，風格要像高級命理報告編輯，不要像聊天機器人，不要空泛雞湯。\n\n使用者資訊：\n- 稱呼：${payload.name}\n- 出生時間：${payload.birth}\n- 出生地：${payload.birthPlace}\n- 性別：${payload.gender}\n- 目前狀態：${payload.status}\n- 時辰可信度：${payload.timeCertainty}\n- 主題：${payload.focus}\n- 流派：${payload.path}\n- 心願：${payload.wish}\n\n請你做的事：\n1. 先判斷目前運勢重點與最值得注意的地方。\n2. 用較具體的描述，不要只有抽象形容詞。\n3. 結果要有「可執行感」，讓使用者看完知道怎麼做。\n4. 如果時辰可信度不高，語氣稍微保留，但不要破壞閱讀感。\n5. 額外輸出三個分區：感情、事業、財運，讓前端能直接做成報告頁。\n\n請輸出 JSON，格式如下：\n{\n  "headline": "短句標題，像報告首頁標題",\n  "summary": "3-4 句完整摘要",\n  "highlights": ["重點1", "重點2", "重點3"],\n  "sections": [\n    {"title":"感情","body":"..."},\n    {"title":"事業","body":"..."},\n    {"title":"財運","body":"..."}\n  ],\n  "lucky": {"color":"色彩","number":1,"day":"週X","mantra":"短句"},\n  "roadmap": {"today":"...","week":"...","month":"...","season":"..."}\n}\n只輸出 JSON，不要加任何前言或 markdown。`;
 };
 
 export const onRequest: PagesFunction<Env> = async (context) => {
@@ -76,7 +85,10 @@ export const onRequest: PagesFunction<Env> = async (context) => {
       });
     }
 
-    const parsed = JSON.parse(jsonText);
+    const parsed = JSON.parse(jsonText) as { sections?: FortuneSection[] };
+    if (!Array.isArray(parsed.sections)) {
+      parsed.sections = [];
+    }
     return new Response(JSON.stringify({ ok: true, data: parsed }), {
       status: 200,
       headers: { "Content-Type": "application/json" },

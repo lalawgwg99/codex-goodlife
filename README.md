@@ -1,51 +1,197 @@
-# codex-goodlife · GoodLife 算命工作室
+# codex-goodlife · GoodLife 命理工作室
 
-輕量級算命體驗站：輸入稱呼、生辰、心願，選擇靈感流派，即刻生成可分享的運勢卡片。純前端、零後端依賴，直接部署 Cloudflare Pages/Workers。
+這是一個部署到 Cloudflare Pages 的 AI 命理網站。
 
-## 特色
-- 多流派靈感：內建賽博八字、月老姻緣、奇門紫微、大師兜底、X 導師、輕量 waza 等選項。
-- 即時生成：前端純函式生成指數、運勢摘要、幸運信號、雷達與行動路徑。
-- 分享與保存：一鍵生成圖卡、保存運勢紀錄（localStorage）。
-- Cloudflare Ready：Vite + React + Tailwind；預設 build 指令 `npm run build`，發布目錄 `dist`。
- - AI 解讀：透過 Cloudflare Pages Functions 呼叫 OpenRouter（OpenAI SDK）。
+它支援：
+- 繁體 / 簡體切換
+- 使用者輸入更完整的命理資料
+- 前端呼叫 `/api/fortune`
+- Cloudflare Pages Functions 代理 OpenRouter
+- 分享卡下載與本地保存紀錄
 
-## 快速開始（本地）
+## 本地開發
+
 ```bash
 npm install
-npm run dev   # http://localhost:5173
+npm run dev
 ```
 
-## 必要設定（Cloudflare Pages）
-此專案使用 Pages Functions 呼叫 OpenRouter AI，需要在 Cloudflare Pages 設定環境變數。
+本地開發網址通常是：
 
-### 1) Cloudflare Pages 專案設定
-- Framework：Vite
-- Build command：`npm run build`
-- Build output directory：`dist`
-
-### 2) 環境變數（必填）
-在 Cloudflare Pages → Settings → Environment variables 新增：
-- `OPENROUTER_API_KEY`：你的 OpenRouter API Key（必填）
-
-### 3) 環境變數（可選）
-- `OPENROUTER_MODEL`：模型名稱（預設 `qwen/qwen3.6-plus:free`）
-- `OPENROUTER_BASE_URL`：Base URL（預設 `https://openrouter.ai/api/v1`）
-- `OPENROUTER_REFERER`：如 OpenRouter 要求 referer，再填
-- `OPENROUTER_TITLE`：可填站點名稱，便於追蹤
-
-### 4) 驗證
-部署後打開網站，點「生成 AI 解讀」即可測試。
-
-## 建置
 ```bash
-npm run build
-# 輸出在 dist/
+http://localhost:5173
 ```
 
-## API 端點
-前端會呼叫 `POST /api/fortune`，由 Cloudflare Pages Functions 代理 OpenRouter。
+注意：
+- 本地 `vite dev` 只會跑前端
+- `/api/fortune` 是 Cloudflare Pages Functions
+- 如果你要在本地連同 Functions 一起測，建議之後用 `wrangler pages dev`
 
-## 自訂
-- 調整流派來源：修改 `src/App.tsx` 的 `flows` 陣列。
-- 文案/配色：`src/App.tsx` + `src/index.css`。
-- 若接入真實算命 API：在 `src` 增加 API 模組，於 Cloudflare Pages Functions/Workers 以 Edge fetch 代理。
+## Cloudflare 部署教學
+
+下面這份是可以直接照做的版本。
+
+### 1. 把程式碼推到 GitHub
+
+確認你的專案已經在 GitHub 上，像目前這個 repo：
+
+```bash
+lalawgwg99/codex-goodlife
+```
+
+### 2. 到 Cloudflare Pages 建立專案
+
+在 Cloudflare Dashboard：
+
+1. 進入 `Workers & Pages`
+2. 點 `Create application`
+3. 選 `Pages`
+4. 選 `Connect to Git`
+5. 授權 GitHub
+6. 選你的 repo：`codex-goodlife`
+
+### 3. Build 設定怎麼填
+
+如果 Cloudflare 要你填建置資訊，請填：
+
+- Framework preset: `Vite`
+- Build command: `npm run build`
+- Build output directory: `dist`
+- Root directory: 留空
+
+如果它自動帶入 Vite 設定，確認跟上面一致即可。
+
+### 4. 環境變數怎麼設
+
+在 Pages 專案裡：
+
+1. 打開你的 Pages 專案
+2. 進入 `Settings`
+3. 點 `Environment variables`
+4. 新增以下變數
+
+必填：
+
+- `OPENROUTER_API_KEY`
+
+可選：
+
+- `OPENROUTER_MODEL`
+- `OPENROUTER_BASE_URL`
+- `OPENROUTER_REFERER`
+- `OPENROUTER_TITLE`
+
+推薦值：
+
+```bash
+OPENROUTER_MODEL=qwen/qwen3.6-plus:free
+OPENROUTER_BASE_URL=https://openrouter.ai/api/v1
+```
+
+如果你沒有特別需求：
+- `OPENROUTER_REFERER` 可以先不填
+- `OPENROUTER_TITLE` 可以填 `GoodLife`
+
+### 5. 為什麼 API Key 不能放前端
+
+這個專案不是在前端直接打 OpenRouter。
+
+流程是：
+
+1. 前端送資料到 `/api/fortune`
+2. Cloudflare Pages Functions 收到請求
+3. Functions 用環境變數裡的 `OPENROUTER_API_KEY` 呼叫 OpenRouter
+4. 再把 JSON 結果回傳給前端
+
+所以：
+- 金鑰不會出現在瀏覽器原始碼裡
+- 也不會直接暴露在前端請求中
+
+### 6. 第一次部署後怎麼驗證
+
+部署完成後請這樣測：
+
+1. 打開網站首頁
+2. 輸入稱呼、出生時間、出生地、性別、目前狀態
+3. 選主題與流派
+4. 點 `生成 AI 命盤`
+
+正常情況下你會看到：
+- 標題
+- 總覽判讀
+- 三個關鍵提醒
+- 感情 / 事業 / 財運分區
+- 開運提示
+- 時間節奏
+
+### 7. 如果按了沒反應，要檢查什麼
+
+先檢查這幾項：
+
+1. Cloudflare Pages 的環境變數有沒有真的存好
+2. `OPENROUTER_API_KEY` 有沒有填錯
+3. `OPENROUTER_MODEL` 是否存在
+4. 有沒有重新部署
+
+很重要：
+- 改完環境變數後，通常要重新部署一次
+
+### 8. 如果頁面正常，但 AI 報錯
+
+先看網站上的錯誤訊息。
+
+常見原因：
+- API key 無效
+- 模型名稱錯誤
+- OpenRouter 額度或限制問題
+- OpenRouter 需要 referer，但你沒填
+
+如果遇到這種情況，優先測：
+
+```bash
+OPENROUTER_MODEL=qwen/qwen3.6-plus:free
+OPENROUTER_BASE_URL=https://openrouter.ai/api/v1
+```
+
+### 9. 這個專案目前的 API 位置
+
+前端呼叫：
+
+```bash
+POST /api/fortune
+```
+
+Cloudflare Pages Functions 檔案在：
+
+- [fortune.ts](/Users/jazzxx/Desktop/命理測算/codex-goodlife/functions/api/fortune.ts)
+
+前端主畫面在：
+
+- [App.tsx](/Users/jazzxx/Desktop/命理測算/codex-goodlife/src/App.tsx)
+
+樣式在：
+
+- [index.css](/Users/jazzxx/Desktop/命理測算/codex-goodlife/src/index.css)
+
+## 目前 AI 會吃哪些資料
+
+前端會送這些欄位給 AI：
+
+- 稱呼
+- 出生日期與時間
+- 出生地
+- 性別
+- 目前狀態
+- 時辰可信度
+- 主題焦點
+- 流派
+- 目前最想問的事
+- 語言
+
+## 下一步建議
+
+如果你要再往上做，我最推薦這三個方向：
+
+1. 加入 `wrangler.toml`，把本地聯調也補齊
+2. 讓分享卡有專門版型，不只是截圖
+3. 把 AI 結果擴成更完整的「感情 / 事業 / 財運 / 健康」四區報告
