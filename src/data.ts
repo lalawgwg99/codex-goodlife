@@ -3,8 +3,7 @@ import type { AIResult, Choice, Flow, Focus, Lang } from "./types";
 export const copy = {
   "zh-TW": {
     eyebrow: "Oracle Atelier",
-    heroTitle: "不是算命頁，
-是你的命理編輯室。",
+    heroTitle: "不是算命頁，\n是你的命理編輯室。",
     heroTitleShort: "命理編輯室",
     heroBody:
       "把輸入、判讀、圖像和分享重新做成完整體驗。資料輸入像建檔，結果輸出像一本只屬於你的小型命理刊物。",
@@ -77,8 +76,7 @@ export const copy = {
   },
   "zh-CN": {
     eyebrow: "Oracle Atelier",
-    heroTitle: "不是算命页，
-是你的命理编辑室。",
+    heroTitle: "不是算命页，\n是你的命理编辑室。",
     heroTitleShort: "命理编辑室",
     heroBody:
       "把输入、判读、图像和分享重新做成完整体验。资料输入像建档，结果输出像一本只属于你的小型命理刊物。",
