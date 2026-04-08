@@ -1,4 +1,5 @@
 import { useEffect, useMemo, useRef, useState } from "react";
+import type { ReactNode } from "react";
 import { toPng } from "html-to-image";
 
 type Lang = "zh-TW" | "zh-CN";
@@ -48,8 +49,11 @@ const copy = {
   "zh-TW": {
     eyebrow: "Oracle Atelier",
     heroTitle: "不是算命頁，\n是你的命理編輯室。",
+    heroTitleShort: "命理編輯室",
     heroBody:
-      "把輸入、判讀、圖像和分享重新做成一個完整體驗。資料輸入像建檔，結果輸出像一本只屬於你的小型命理刊物。",
+      "把輸入、判讀、圖像和分享重新做成完整體驗。資料輸入像建檔，結果輸出像一本只屬於你的小型命理刊物。",
+    heroBodyShort:
+      "輸入像建檔、結果像刊物。這不是工具頁，是一份可讀、可收藏的命理報告。",
     heroNote: "Cloudflare Pages + OpenRouter",
     heroTagA: "雙語切換",
     heroTagB: "AI 報告",
@@ -60,6 +64,7 @@ const copy = {
     identityTitle: "身份輪廓",
     contextTitle: "情境設定",
     questionTitle: "提問核心",
+    toggleHint: "點擊展開",
     name: "稱呼",
     birth: "出生日期與時間",
     birthPlace: "出生地",
@@ -111,8 +116,11 @@ const copy = {
   "zh-CN": {
     eyebrow: "Oracle Atelier",
     heroTitle: "不是算命页，\n是你的命理编辑室。",
+    heroTitleShort: "命理编辑室",
     heroBody:
-      "把输入、判读、图像和分享重新做成一个完整体验。资料输入像建档，结果输出像一本只属于你的小型命理刊物。",
+      "把输入、判读、图像和分享重新做成完整体验。资料输入像建档，结果输出像一本只属于你的小型命理刊物。",
+    heroBodyShort:
+      "输入像建档、结果像刊物。这不是工具页，是一份可读、可收藏的命理报告。",
     heroNote: "Cloudflare Pages + OpenRouter",
     heroTagA: "双语切换",
     heroTagB: "AI 报告",
@@ -123,6 +131,7 @@ const copy = {
     identityTitle: "身份轮廓",
     contextTitle: "情境设定",
     questionTitle: "提问核心",
+    toggleHint: "点击展开",
     name: "称呼",
     birth: "出生日期与时间",
     birthPlace: "出生地",
@@ -258,7 +267,7 @@ const certainties: Choice[] = [
   { id: "unknown", label: { "zh-TW": "不確定", "zh-CN": "不确定" } },
 ];
 
-const storageKey = "goodlife-saved-v5";
+const storageKey = "goodlife-saved-v6";
 const langKey = "goodlife-lang";
 
 const isLang = (value: string): value is Lang => value === "zh-TW" || value === "zh-CN";
@@ -379,18 +388,34 @@ const buildRadarPoints = (values: number[]) => {
     .join(" ");
 };
 
-function SectionCard({
-  title,
-  children,
-}: {
-  title: string;
-  children: React.ReactNode;
-}) {
+function SectionCard({ title, children }: { title: string; children: ReactNode }) {
   return (
     <section className="panel-card rounded-[28px] p-5 md:p-6">
       <p className="panel-label">{title}</p>
       <div className="mt-4">{children}</div>
     </section>
+  );
+}
+
+function CollapsibleCard({
+  title,
+  hint,
+  defaultOpen,
+  children,
+}: {
+  title: string;
+  hint: string;
+  defaultOpen?: boolean;
+  children: ReactNode;
+}) {
+  return (
+    <details className="panel-card panel-collapsible rounded-[28px] p-5 md:p-6" open={defaultOpen}>
+      <summary className="panel-summary">
+        <span className="panel-label">{title}</span>
+        <span className="panel-summary-hint">{hint}</span>
+      </summary>
+      <div className="panel-content">{children}</div>
+    </details>
   );
 }
 
@@ -575,16 +600,20 @@ function App() {
       <div className="orb orb-two" />
       <div className="mx-auto max-w-[1500px] px-4 pb-16 pt-5 md:px-8">
         <header className="hero-shell rounded-[38px] px-5 py-6 md:px-8 md:py-8">
-          <div className="grid gap-6 xl:grid-cols-[1.25fr_0.75fr]">
-            <div className="space-y-6">
+          <div className="grid gap-6 xl:grid-cols-[1.2fr_0.8fr]">
+            <div className="space-y-5">
               <div className="flex flex-wrap items-center gap-3">
                 <span className="pill-light">{t.eyebrow}</span>
                 <span className="pill-dark">{t.heroNote}</span>
               </div>
               <div className="space-y-4">
-                <h1 className="hero-title whitespace-pre-line">{t.heroTitle}</h1>
+                <h1 className="hero-title whitespace-pre-line">
+                  <span className="hidden md:block">{t.heroTitle}</span>
+                  <span className="block md:hidden">{t.heroTitleShort}</span>
+                </h1>
                 <p className="max-w-3xl text-base leading-8 text-stone-600 md:text-lg">
-                  {t.heroBody}
+                  <span className="hidden md:block">{t.heroBody}</span>
+                  <span className="block md:hidden">{t.heroBodyShort}</span>
                 </p>
               </div>
               <div className="flex flex-wrap gap-3">
@@ -597,9 +626,7 @@ function App() {
             <div className="grid gap-4 md:grid-cols-2 xl:grid-cols-1">
               <div className="rounded-[30px] bg-[#14281d] p-5 text-white shadow-[0_20px_50px_rgba(20,40,29,0.28)]">
                 <div className="flex items-center justify-between">
-                  <p className="text-[11px] uppercase tracking-[0.28em] text-white/55">
-                    {t.lang}
-                  </p>
+                  <p className="text-[11px] uppercase tracking-[0.28em] text-white/55">{t.lang}</p>
                   <div className="flex rounded-full bg-white/10 p-1 text-xs">
                     <button
                       onClick={() => setLang("zh-TW")}
@@ -619,7 +646,7 @@ function App() {
                     </button>
                   </div>
                 </div>
-                <div className="mt-5 grid grid-cols-3 gap-3">
+                <div className="mt-5 grid grid-cols-2 gap-3 md:grid-cols-3">
                   {scorecards.slice(0, 3).map((item) => (
                     <div key={item.label} className="rounded-2xl bg-white/10 px-3 py-4">
                       <p className="text-[11px] uppercase tracking-[0.2em] text-white/55">
@@ -630,14 +657,17 @@ function App() {
                   ))}
                 </div>
               </div>
-              <div className="rounded-[30px] bg-white/80 p-5 shadow-[0_14px_40px_rgba(58,45,25,0.08)] ring-1 ring-stone-200">
+              <div className="rounded-[30px] bg-white/85 p-5 shadow-[0_14px_40px_rgba(58,45,25,0.08)] ring-1 ring-stone-200">
                 <p className="text-[11px] uppercase tracking-[0.28em] text-stone-400">
                   {t.signalTitle}
                 </p>
                 <p className="mt-3 text-sm leading-7 text-stone-600">{t.signalBody}</p>
                 <div className="mt-5 space-y-2">
                   {signalBadges.map((item) => (
-                    <div key={item} className="rounded-2xl bg-stone-100 px-4 py-3 text-sm text-stone-700">
+                    <div
+                      key={item}
+                      className="rounded-2xl bg-stone-100 px-4 py-3 text-sm text-stone-700"
+                    >
                       {item}
                     </div>
                   ))}
@@ -648,12 +678,12 @@ function App() {
         </header>
 
         <main className="mt-8 grid gap-8 xl:grid-cols-[420px_minmax(0,1fr)]">
-          <aside className="space-y-5 xl:sticky xl:top-6 xl:self-start">
+          <aside className="order-2 space-y-5 xl:order-1 xl:sticky xl:top-6 xl:self-start">
             <SectionCard title={t.panelTitle}>
               <p className="text-sm leading-7 text-stone-600">{t.panelBody}</p>
             </SectionCard>
 
-            <SectionCard title={t.identityTitle}>
+            <CollapsibleCard title={t.identityTitle} hint={t.toggleHint} defaultOpen>
               <div className="grid gap-4">
                 <label className="field-block">
                   <span className="field-label">{t.name}</span>
@@ -711,9 +741,9 @@ function App() {
                   </label>
                 </div>
               </div>
-            </SectionCard>
+            </CollapsibleCard>
 
-            <SectionCard title={t.contextTitle}>
+            <CollapsibleCard title={t.contextTitle} hint={t.toggleHint}>
               <div className="grid gap-4">
                 <label className="field-block">
                   <span className="field-label">{t.status}</span>
@@ -766,9 +796,9 @@ function App() {
                   </div>
                 </div>
               </div>
-            </SectionCard>
+            </CollapsibleCard>
 
-            <SectionCard title={t.questionTitle}>
+            <CollapsibleCard title={t.questionTitle} hint={t.toggleHint} defaultOpen>
               <label className="field-block">
                 <span className="field-label">{t.wish}</span>
                 <textarea
@@ -785,21 +815,17 @@ function App() {
                 >
                   {loadingAI ? t.generating : t.generate}
                 </button>
-                <button
-                  onClick={onShare}
-                  disabled={sharing}
-                  className="action-secondary"
-                >
+                <button onClick={onShare} disabled={sharing} className="action-secondary">
                   {sharing ? t.sharing : t.share}
                 </button>
                 <button onClick={onSave} className="action-secondary">
                   {saving ? t.saved : t.save}
                 </button>
               </div>
-            </SectionCard>
+            </CollapsibleCard>
           </aside>
 
-          <section className="space-y-6">
+          <section className="order-1 space-y-6 xl:order-2">
             <div
               ref={shareRef}
               className="report-shell overflow-hidden rounded-[40px] border border-[#ddd2c0] bg-[#f3ecdf]"
