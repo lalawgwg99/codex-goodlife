@@ -261,6 +261,22 @@ const certainties: Choice[] = [
 const storageKey = "goodlife-saved-v5";
 const langKey = "goodlife-lang";
 
+const isLang = (value: string): value is Lang => value === "zh-TW" || value === "zh-CN";
+
+const isSavedReadingArray = (value: unknown): value is SavedReading[] =>
+  Array.isArray(value) &&
+  value.every(
+    (item) =>
+      item &&
+      typeof item === "object" &&
+      typeof item.id === "string" &&
+      typeof item.name === "string" &&
+      typeof item.focus === "string" &&
+      typeof item.path === "string" &&
+      typeof item.headline === "string" &&
+      typeof item.date === "string"
+  );
+
 const fallbackSummary = {
   "zh-TW":
     "現在的關鍵不是你有沒有機會，而是你能不能把分散的注意力收回來。當主題清楚、節奏變穩，你的運勢會比想像中更容易轉向。",
@@ -401,13 +417,29 @@ function App() {
   const shareRef = useRef<HTMLDivElement>(null);
 
   useEffect(() => {
-    const storedSaved = localStorage.getItem(storageKey);
-    if (storedSaved) {
-      setSaved(JSON.parse(storedSaved));
+    try {
+      const storedSaved = localStorage.getItem(storageKey);
+      if (storedSaved) {
+        const parsed = JSON.parse(storedSaved);
+        if (isSavedReadingArray(parsed)) {
+          setSaved(parsed);
+        } else {
+          localStorage.removeItem(storageKey);
+        }
+      }
+    } catch {
+      localStorage.removeItem(storageKey);
     }
-    const storedLang = localStorage.getItem(langKey) as Lang | null;
-    if (storedLang) {
-      setLang(storedLang);
+
+    try {
+      const storedLang = localStorage.getItem(langKey);
+      if (storedLang && isLang(storedLang)) {
+        setLang(storedLang);
+      } else if (storedLang) {
+        localStorage.removeItem(langKey);
+      }
+    } catch {
+      localStorage.removeItem(langKey);
     }
   }, []);
 
